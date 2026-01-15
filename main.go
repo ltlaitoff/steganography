@@ -3,98 +3,134 @@
 package main
 
 import (
-	// "bytes"
+	"bytes"
 	"fmt"
 	"image"
-	// "image/jpeg"
-	// "image/png"
-	// "net/http"
+	"image/jpeg"
+	"image/png"
 	"syscall/js"
+
+	"golang.org/x/image/bmp"
 )
 
-// type State struct {
-// 	image *image.RGBA
-// }
-//
-// var state State = State{}
+func ParseImage(imageBytes []byte, contentType string) (image.Image, error) {
+	switch contentType {
+	case "image/png":
+		img, err := png.Decode(bytes.NewReader(imageBytes))
 
-// func ToPng(imageBytes []byte) ([]byte, error) {
-// 	contentType := http.DetectContentType(imageBytes)
-//
-// 	switch contentType {
-// 	case "image/png":
-// 	case "image/jpeg":
-// 		img, err := jpeg.Decode(bytes.NewReader(imageBytes))
-// 		if err != nil {
-// 			return nil, fmt.Errorf("unable to decode jpeg")
-// 		}
-//
-// 		buf := new(bytes.Buffer)
-// 		if err := png.Encode(buf, img); err != nil {
-// 			return nil, fmt.Errorf("unable to encode png")
-// 		}
-//
-// 		return buf.Bytes(), nil
-// 	}
-//
-// 	return nil, fmt.Errorf("unable to convert %#v to png", contentType)
-// }
+		if err != nil {
+			return nil, fmt.Errorf("Unable to decode png")
+		}
 
-type Options struct {
-	message string `json:"message"`
+		return img, nil
+
+	case "image/jpeg":
+		img, err := jpeg.Decode(bytes.NewReader(imageBytes))
+		if err != nil {
+			return nil, fmt.Errorf("Unable to decode jpeg")
+		}
+
+		return img, nil
+
+	case "image/bmp":
+		img, err := bmp.Decode(bytes.NewReader(imageBytes))
+
+		if err != nil {
+			return nil, fmt.Errorf("Unable to decode bmp")
+		}
+
+		return img, nil
+	}
+
+	return nil, fmt.Errorf("Invalid image format")
+}
+
+func EncodeImage(image image.Image, contentType string) ([]byte, error) {
+	buf := new(bytes.Buffer)
+
+	if contentType == "image/jpeg" {
+		contentType = "image/png"
+	}
+
+	switch contentType {
+	case "image/png":
+		if err := png.Encode(buf, image); err != nil {
+			return nil, fmt.Errorf("unable to encode png")
+		}
+	case "image/jpeg":
+		if err := jpeg.Encode(buf, image, nil); err != nil {
+			return nil, fmt.Errorf("Unable to encode jpeg")
+		}
+	case "image/bmp":
+		if err := bmp.Encode(buf, image); err != nil {
+			return nil, fmt.Errorf("Unable to encode bmp")
+		}
+	}
+
+	return buf.Bytes(), nil
 }
 
 func lsb(this js.Value, args []js.Value) interface{} {
 	fmt.Println("[GO]: Run LSB")
 
 	jsImageBytes := args[0]
-	message := args[1].String()
+	imageType := args[1].String()
+	message := args[2].String()
 
-	imageBuffer := make([]uint8, jsImageBytes.Get("byteLength").Int())
+	imageBuffer := make([]byte, jsImageBytes.Get("byteLength").Int())
 	js.CopyBytesToGo(imageBuffer, jsImageBytes)
 
-	// options := Options{}
-	// err := json.Unmarshal([]byte(jsOptions), &options)
-	// if err != nil {
-	//   options = convert.DefaultOptions
-	// }
+	fmt.Printf("Go secret message: \"%s\"\n", message)
 
-	// messageBuffer := make([]uint8, jsImageBytes.Get("byteLength").Int())
-	// js.CopyBytesToGo(imageBuffer, jsImageBytes)
+	containerImage, err := ParseImage(imageBuffer, imageType)
+	if err != nil {
+		panic(fmt.Errorf("Something went wrong with parse image: %s", err))
+	}
 
-	// pngImage, err := ToPng(imageBuffer)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	fmt.Println("Container image:", containerImage)
+	stegoImageRaw := encodeMessage(message, containerImage)
+	fmt.Println("Stego image raw:", stegoImageRaw.Pix)
 
-	fmt.Printf("Go: \"%s\"\n", message)
+	stegoImage, err := EncodeImage(&stegoImageRaw, imageType)
+	if err != nil {
+		panic(fmt.Errorf("Something went wrong with encode image: %s", err))
+	}
+	fmt.Println("Stego image:", stegoImage)
 
-	containerImage := image.NewRGBA(image.Rect(0, 0, 640, 426))
-	containerImage.Pix = imageBuffer 
-
-	fmt.Println("A:", containerImage.Pix)
-	stegoImage := encodeMessage(message, *containerImage)
-	// stegoImage := *containerImage
-
-	// if (err != nil) {
-	// 	panic("Err in to png stego")
-	// }
-
-	fmt.Println("E:", stegoImage.Pix)
-
-	fmt.Printf("Decoded text: \"%s\"\n", decodeMessage(stegoImage, len(message)))
-
-	uint8Array := js.Global().Get("Uint8Array").New(len(stegoImage.Pix))
-	js.CopyBytesToJS(uint8Array, stegoImage.Pix)
+	uint8Array := js.Global().Get("Uint8Array").New(len(stegoImage))
+	js.CopyBytesToJS(uint8Array, stegoImage)
 
 	return uint8Array
+}
+
+func decodeLsb(this js.Value, args []js.Value) interface{} {
+	fmt.Println("[GO]: Run Decode LSB")
+
+	jsImageBytes := args[0]
+	imageType := args[1].String()
+	messageLength := args[2].Int()
+
+	imageBuffer := make([]byte, jsImageBytes.Get("byteLength").Int())
+	js.CopyBytesToGo(imageBuffer, jsImageBytes)
+
+	stegoImage, err := ParseImage(imageBuffer, imageType)
+	if err != nil {
+		panic(fmt.Errorf("Something went wrong with parse image: %s", err))
+	}
+
+	fmt.Println("Stego image:", stegoImage)
+
+	result := decodeMessage(stegoImage, messageLength)
+	fmt.Println("Decoded message:", result)
+
+	return result 
 }
 
 func main() {
 	c := make(chan bool)
 
-	// js.Global().Set("goSetImage", js.FuncOf(setImage))
 	js.Global().Set("goLSB", js.FuncOf(lsb))
+	js.Global().Set("goDecodeLSB", js.FuncOf(decodeLsb))
 
 	<-c
 }

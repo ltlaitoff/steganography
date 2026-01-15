@@ -17,6 +17,7 @@ const config = Object.freeze({
 
 const state = {
 	image: undefined,
+	imageFile: undefined,
 	message: ''
 }
 
@@ -40,9 +41,12 @@ containerImageInput.addEventListener('change', e => {
 	if (!file) {
 		throw new Error('No file selected. Please choose a file.')
 	}
-	previewImage.src = URL.createObjectURL(file);
+
+	previewImage.src = URL.createObjectURL(file)
 
 	const reader = new FileReader()
+
+	state.imageFile = file
 
 	reader.onload = function() {
 		state.image = new Uint8Array(this.result)
@@ -60,13 +64,22 @@ messageInput.addEventListener('change', (e) => {
 })
 
 submitButton.addEventListener('click', () => {
-	const content = goLSB(state.image, state.message)
+	const content = goLSB(state.image, state.imageFile.type, state.message)
 
 	console.log("JS", content)
 
 	resultImage.src = URL.createObjectURL(
 		new Blob([content.buffer], { type: 'image/bmp' })
 	);
+
+	let decodeImageType = state.imageFile.type
+
+	if (state.imageFile.type === "image/jpeg") {
+		decodeImageType = "image/png"
+	}
+
+	const decodedMessage = goDecodeLSB(content, decodeImageType, state.message.length)
+	console.log("Decoded message js:", decodedMessage)
 })
 
 async function main() {
