@@ -12,8 +12,6 @@ import (
 const DEBUG = true
 
 func encodeMessage(message string, inputImage image.Image) image.RGBA {
-	fmt.Println("Start encoding")
-
 	bounds := inputImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), inputImage, bounds.Min, draw.Src)
@@ -27,11 +25,8 @@ func encodeMessage(message string, inputImage image.Image) image.RGBA {
 		panic("Image is small for this message")
 	}
 
-	fmt.Println("Checks passed, res is splited into chars")
-
 	x, y := bounds.Min.X, bounds.Min.Y
 	for _, char := range res {
-		fmt.Println("Iteration for", char, "with", x, y)
 		one := uint8(0)
 		if char == '1' {
 			one = 1
