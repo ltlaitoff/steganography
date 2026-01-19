@@ -1,6 +1,4 @@
-//go:build js && wasm
-
-package main
+package lsb
 
 import (
 	"fmt"
@@ -9,12 +7,15 @@ import (
 	"image/draw"
 )
 
-const DEBUG = true
+// If enabled encoding will produce visible to eye result
+// Use to check what pixels are affected in result of algorithm
+var VISUAL_DEBUG bool = false
 
-func encodeMessage(message string, inputImage image.Image) image.RGBA {
-	bounds := inputImage.Bounds()
+// 
+func Encode(containerImage image.Image, message string) image.RGBA {
+	bounds := containerImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
-	draw.Draw(rgba, rgba.Bounds(), inputImage, bounds.Min, draw.Src)
+	draw.Draw(rgba, rgba.Bounds(), containerImage, bounds.Min, draw.Src)
 
 	res := ""
 	for _, r := range []byte(message) {
@@ -68,7 +69,7 @@ func encodeMessage(message string, inputImage image.Image) image.RGBA {
 	return *rgba
 }
 
-func decodeMessage(encodedImage image.Image, length int) string {
+func Decode(encodedImage image.Image, length int) string {
 	bounds := encodedImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), encodedImage, bounds.Min, draw.Src)
@@ -102,4 +103,3 @@ func decodeMessage(encodedImage image.Image, length int) string {
 
 	return string(data)
 }
-

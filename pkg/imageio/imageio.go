@@ -1,6 +1,4 @@
-//go:build js && wasm
-
-package main
+package imageio 
 
 import (
 	"bytes"
@@ -9,11 +7,14 @@ import (
 	"image/jpeg"
 	"image/png"
 
+	"github.com/ltlaitoff/steganography/pkg/assert"
 	"golang.org/x/image/bmp"
 )
 
-func ParseImage(imageBytes []byte, contentType string) (image.Image, error) {
-	switch contentType {
+func ParseImage(imageBytes []byte, imageTyp string) (image.Image, error) {
+	assert.Assert(imageTyp != "", "Image type should have value")
+
+	switch imageTyp {
 	case "image/png":
 		img, err := png.Decode(bytes.NewReader(imageBytes))
 
@@ -44,14 +45,12 @@ func ParseImage(imageBytes []byte, contentType string) (image.Image, error) {
 	return nil, fmt.Errorf("Invalid image format")
 }
 
-func EncodeImage(image image.Image, contentType string) ([]byte, error) {
+func EncodeImage(image image.Image, imageType string) ([]byte, error) {
+	assert.Assert(imageType != "", "Image type should have value")
+	
 	buf := new(bytes.Buffer)
 
-	if contentType == "image/jpeg" {
-		contentType = "image/png"
-	}
-
-	switch contentType {
+	switch imageType {
 	case "image/png":
 		if err := png.Encode(buf, image); err != nil {
 			return nil, fmt.Errorf("unable to encode png")
