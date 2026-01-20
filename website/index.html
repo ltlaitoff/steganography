@@ -7,28 +7,61 @@
 			content="width=device-width, initial-scale=1.0"
 		/>
 		<title>Steganography</title>
+		<link
+			rel="stylesheet"
+			href="./main.css"
+		/>
 	</head>
 	<body>
 		<div>
 			<img
-				id="preview"
+				id="original-preview"
 				width="200"
 				height="200"
 			/>
 			<input
 				type="file"
-				id="container-image"
+				id="original-input"
 				name="Image container"
 				accept=".bmp,.png,.jpg"
 			/>
 
-			<input id="message" type="text" />
+			<input
+				id="lsb-encode-secret-message-input"
+				type="text"
+			/>
 
 			<button id="submit-button">Submit</button>
 			<img
-				id="result"
+				id="result-preview"
 				width="200"
 				height="200"
+			/>
+
+			<input
+				class="hidden"
+				type="text"
+				id="lsb-decode-secret-key-input"
+			/>
+			<input
+				class="hidden"
+				type="text"
+				id="lsb-encode-secret-as-file"
+			/>
+			<input
+				class="hidden"
+				type="text"
+				id="lsb-encode-secret-file-input"
+			/>
+			<input
+				class="hidden"
+				type="text"
+				id="lsb-decode-secret-as-file"
+			/>
+			<input
+				class="hidden"
+				type="text"
+				id="lsb-decode-secret-message-input"
 			/>
 		</div>
 
