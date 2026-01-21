@@ -52,10 +52,11 @@ interface Config {
 			encodeBlock: ElementInfo<HTMLDivElement>
 			decodeBlock: ElementInfo<HTMLDivElement>
 		}
+		swapButton: ElementInfo<HTMLButtonElement>
 	}
 
 	ids: {
-		DEBUG: ElementInfo<HTMLInputElement>,
+		DEBUG: ElementInfo<HTMLInputElement>
 		LSB: {
 			keyInput: ElementInfo<HTMLInputElement>
 			secretAsFileCheckbox: ElementInfo<HTMLInputElement>
@@ -79,6 +80,10 @@ interface State {
 	activeOperation: Operation
 
 	debugMode: boolean
+
+	originalImageFile: File | undefined
+	resultImageFile: File | undefined
+	secretMessage: string
 }
 
 type Assert = (condition: boolean, message: string) => asserts condition
@@ -90,8 +95,13 @@ type ConstuctorReturnType<T extends new (...args: any) => any> = T extends new (
 	: any
 
 type LoadElement = <T extends HTMLElement>(elementInfo: ElementInfo<T>) => T
+type FileToByteArray = (file: File) => Promise<Uint8Array>
 
 /**
-	* Functions from WASM Golang
-	*/
+ * Functions from WASM Golang
+ */
+//prettier-ignore
+declare function goLSB(image: Uint8Array, imageType: string, secretMessage: string)
+//prettier-ignore
+declare function goDecodeLSB(image: Uint8Array, imageType: string, length: number)
 declare function goDebug(debugMode: boolean): void

@@ -42,7 +42,8 @@ const config = {
 			baseBlock: { id: "lsb", type: HTMLDivElement },
 			encodeBlock: { id: "lsb-encode", type: HTMLDivElement },
 			decodeBlock: { id: "lsb-decode", type: HTMLDivElement },
-		}
+		},
+		swapButton: { id: "swap", type: HTMLButtonElement }
 	},
 
 	// prettier-ignore
@@ -88,7 +89,8 @@ const UI = {
 		baseBlock: loadElement(config.UIids.LSB.baseBlock),
 		encodeBlock: loadElement(config.UIids.LSB.encodeBlock),
 		decodeBlock: loadElement(config.UIids.LSB.decodeBlock)
-	}
+	},
+	swapButton: loadElement(config.UIids.swapButton)
 }
 
 // prettier-ignore
@@ -116,10 +118,28 @@ const state = {
 	activeOperation: 'ENCODE',
 	debugMode: false,
 
-	image: undefined,
-	imageFile: undefined,
-	message: ''
+	originalImageFile: undefined,
+	resultImageFile: undefined,
+	secretMessage: ''
 }
+
+// --
+
+UI.swapButton.addEventListener('click', e => {
+	assert(
+		e.target instanceof config.UIids.swapButton.type,
+		'Event target on click swap should be same type as config swap button'
+	)
+
+	if (state.originalImageFile === undefined) return
+	if (state.resultImageFile === undefined) return
+
+	const temp = state.originalImageFile
+	state.originalImageFile = state.resultImageFile
+	state.resultImageFile = temp
+
+	render()
+})
 
 DEBUG.addEventListener('change', e => {
 	assert(
@@ -132,27 +152,31 @@ DEBUG.addEventListener('change', e => {
 })
 
 GLOBAL.originalImageInput.addEventListener('change', e => {
-	const file = e.target.files[0]
+	assert(
+		e.target instanceof config.globalIds.originalImageInput.type,
+		'Event target on change image input should be same type as type from config'
+	)
+	assert(e.target.files !== null, 'Original image input should have files')
 
+	const file = e.target.files[0]
 	if (!file) {
 		throw new Error('No file selected. Please choose a file.')
 	}
 
-	GLOBAL.originalImagePreview.src = URL.createObjectURL(file)
+	state.originalImageFile = file
+	render()
 
-	const reader = new FileReader()
-
-	state.imageFile = file
-
-	reader.onload = function () {
-		state.image = new Uint8Array(this.result)
-	}
-
-	reader.onerror = () => {
-		showMessage('Error reading the file. Please try again.', 'error')
-	}
-
-	reader.readAsArrayBuffer(file)
+	// const reader = new FileReader()
+	//
+	// reader.onload = function() {
+	// 	assert(this.result !== null, "")
+	// }
+	//
+	// reader.onerror = () => {
+	// 	throw new Error('Error reading the file. Please try again.')
+	// }
+	//
+	// reader.readAsArrayBuffer(file)
 })
 
 LSB.encode.secretMessageInput.addEventListener('change', e => {
@@ -165,28 +189,49 @@ LSB.encode.secretMessageInput.addEventListener('change', e => {
 		'Secret message input on change event target should have the same type from config!'
 	)
 
-	state.message = e.target.value
+	state.secretMessage = e.target.value
 })
 
-function submitLSBEncode() {
-	const content = goLSB(state.image, state.imageFile.type, state.message)
+async function submitLSBEncode() {
+	if (state.secretMessage === '') {
+		throw new Error('Secret message is empty!')
+	}
+
+	if (state.originalImageFile === undefined) {
+		throw new Error('Image is not loaded!')
+	}
+
+	const originalImage = await fileToByteArray(state.originalImageFile)
+
+	const content = goLSB(
+		originalImage,
+		state.originalImageFile.type,
+		state.secretMessage
+	)
 
 	console.log('JS', content)
 
-	GLOBAL.resultImagePreview.src = URL.createObjectURL(
-		new Blob([content.buffer], { type: 'image/bmp' })
-	)
+	const blob = new Blob([content.buffer], { type: state.originalImageFile.type })
+	state.resultImageFile = new File([blob], `result.${blob.type}`, { type: blob.type });
+
+	render()
 }
 
-function submitLSBDecode() {
-	let decodeImageType = state.imageFile.type
+async function submitLSBDecode() {
+	if (state.originalImageFile === undefined) {
+		throw new Error('Image is not loaded!')
+	}
 
-	if (state.imageFile.type === 'image/jpeg') {
+	const originalImage = await fileToByteArray(state.originalImageFile)
+
+	let decodeImageType = state.originalImageFile.type
+
+	if (state.originalImageFile.type === 'image/jpeg') {
 		decodeImageType = 'image/png'
 	}
 
 	const decodedMessage = goDecodeLSB(
-		state.image,
+		originalImage,
 		decodeImageType,
 		// TODO: Remove length
 		1000
@@ -217,13 +262,13 @@ UI.menu.base.addEventListener('change', e => {
 
 	assert(
 		e.target.name == config.menu.name.methods ||
-			e.target.name == config.menu.name.operation,
+		e.target.name == config.menu.name.operation,
 		'Menu input name should be one of menu names'
 	)
 
 	assert(
 		config.menu.value.methods.includes(e.target.value) ||
-			config.menu.value.operation.includes(e.target.value),
+		config.menu.value.operation.includes(e.target.value),
 		'Menu input value should be one from menu config'
 	)
 
@@ -282,6 +327,22 @@ function render() {
 	} else if (state.activeMethod == 'BPCS') {
 		UI.LSB.baseBlock.classList.add('hidden')
 	}
+
+
+	if (state.originalImageFile) {
+		GLOBAL.originalImagePreview.src = URL.createObjectURL(state.originalImageFile)
+	}
+
+	if (state.resultImageFile) {
+		GLOBAL.resultImagePreview.src = URL.createObjectURL(state.resultImageFile)
+	}
+}
+
+/**
+ * @type {FileToByteArray}
+ */
+async function fileToByteArray(file) {
+	return file.arrayBuffer().then(value => new Uint8Array(value))
 }
 
 /**
