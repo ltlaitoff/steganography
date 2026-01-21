@@ -60,7 +60,7 @@ func EncodeLSB(imageBytes []byte, imageType string, message string) []byte {
 	return encodedBytes
 }
 
-func DecodeLSB(imageBytes []byte, imageType string, messageLength int) string {
+func DecodeLSB(imageBytes []byte, imageType string) string {
 	assert.Assert(imageType != "", "Image type should have value")
 	image, err := imageio.ParseImage(imageBytes, imageType)
 
@@ -68,7 +68,7 @@ func DecodeLSB(imageBytes []byte, imageType string, messageLength int) string {
 		panic(fmt.Errorf("Something went wrong with parse image: %s", err))
 	}
 
-	result := lsb.Decode(image, messageLength)
+	result := lsb.Decode(image)
 
 	return result
 }

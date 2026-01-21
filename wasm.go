@@ -24,11 +24,10 @@ func encodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 func decodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 	fmt.Println("[GO]: Run Decode LSB")
 
-	imageType := args[1].String()
-	messageLength := args[2].Int()
 	image := JSToGoBytes(args[0])
+	imageType := args[1].String()
 
-	return stego.DecodeLSB(image, imageType, messageLength)
+	return stego.DecodeLSB(image, imageType)
 }
 
 func debug(this js.Value, args []js.Value) interface{} {

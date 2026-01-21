@@ -103,5 +103,5 @@ type FileToByteArray = (file: File) => Promise<Uint8Array>
 //prettier-ignore
 declare function goLSB(image: Uint8Array, imageType: string, secretMessage: string)
 //prettier-ignore
-declare function goDecodeLSB(image: Uint8Array, imageType: string, length: number)
+declare function goDecodeLSB(image: Uint8Array, imageType: string)
 declare function goDebug(debugMode: boolean): void

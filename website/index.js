@@ -211,8 +211,16 @@ async function submitLSBEncode() {
 
 	console.log('JS', content)
 
-	const blob = new Blob([content.buffer], { type: state.originalImageFile.type })
-	state.resultImageFile = new File([blob], `result.${blob.type}`, { type: blob.type });
+	let resultImageType = state.originalImageFile.type
+
+	if (state.originalImageFile.type === 'image/jpeg') {
+		resultImageType = 'image/png'
+	}
+
+	const blob = new Blob([content.buffer], { type: resultImageType })
+	state.resultImageFile = new File([blob], `result.${blob.type}`, {
+		type: blob.type
+	})
 
 	render()
 }
@@ -232,9 +240,7 @@ async function submitLSBDecode() {
 
 	const decodedMessage = goDecodeLSB(
 		originalImage,
-		decodeImageType,
-		// TODO: Remove length
-		1000
+		decodeImageType
 	)
 
 	LSB.decode.secretMessageOutput.value = decodedMessage
@@ -262,13 +268,13 @@ UI.menu.base.addEventListener('change', e => {
 
 	assert(
 		e.target.name == config.menu.name.methods ||
-		e.target.name == config.menu.name.operation,
+			e.target.name == config.menu.name.operation,
 		'Menu input name should be one of menu names'
 	)
 
 	assert(
 		config.menu.value.methods.includes(e.target.value) ||
-		config.menu.value.operation.includes(e.target.value),
+			config.menu.value.operation.includes(e.target.value),
 		'Menu input value should be one from menu config'
 	)
 
@@ -328,9 +334,10 @@ function render() {
 		UI.LSB.baseBlock.classList.add('hidden')
 	}
 
-
 	if (state.originalImageFile) {
-		GLOBAL.originalImagePreview.src = URL.createObjectURL(state.originalImageFile)
+		GLOBAL.originalImagePreview.src = URL.createObjectURL(
+			state.originalImageFile
+		)
 	}
 
 	if (state.resultImageFile) {

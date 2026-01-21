@@ -70,7 +70,7 @@ func Encode(containerImage image.Image, message string, options Options) image.R
 	return *rgba
 }
 
-func Decode(encodedImage image.Image, length int) string {
+func Decode(encodedImage image.Image) string {
 	bounds := encodedImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), encodedImage, bounds.Min, draw.Src)
@@ -94,10 +94,6 @@ func Decode(encodedImage image.Image, length int) string {
 				data = append(data, newByte)
 				i = 7
 				newByte = 0
-
-				if len(data) >= length {
-					return string(data)
-				}
 			}
 		}
 	}
