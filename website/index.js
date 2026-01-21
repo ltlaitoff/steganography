@@ -59,7 +59,8 @@ const config = {
 			secretFileInput: { id: 'lsb-encode-secret-file-input', type: HTMLInputElement }
 		},
 		LSB_DECODE: {
-			secretMessageOutput: { id: 'lsb-decode-secret-message-output', type: HTMLInputElement }
+			secretMessageOutput: { id: 'lsb-decode-secret-message-output', type: HTMLInputElement },
+			secretFileOutputButton: { id: 'lsb-decode-secret-file-output-button', type: HTMLButtonElement }
 		}
 	}
 
@@ -104,7 +105,8 @@ const LSB = {
 		secretFileInput: loadElement(config.ids.LSB_ENCODE.secretFileInput)
 	},
 	decode: {
-		secretMessageOutput: loadElement(config.ids.LSB_DECODE.secretMessageOutput)
+		secretMessageOutput: loadElement(config.ids.LSB_DECODE.secretMessageOutput),
+		secretFileOutputButton: loadElement(config.ids.LSB_DECODE.secretFileOutputButton)
 	}
 }
 
@@ -120,10 +122,65 @@ const state = {
 
 	originalImageFile: undefined,
 	resultImageFile: undefined,
-	secretMessage: ''
+	secretMessage: '',
+
+	LSB: {
+		secretAsFile: false,
+		encodeSecretFile: undefined,
+		decodedSecretFile: undefined
+	}
 }
 
 // --
+
+LSB.decode.secretFileOutputButton.addEventListener('click', e => {
+	assert(
+		e.target instanceof config.ids.LSB_DECODE.secretFileOutputButton.type,
+		'Event target of lsb decode file output button should be equalt to config value'
+	)
+
+	assert(
+		state.LSB.decodedSecretFile !== undefined,
+		'Decoded secret file lsb should be defined on click on button'
+	)
+
+	const url = URL.createObjectURL(state.LSB.decodedSecretFile)
+
+	const a = document.createElement('a')
+	a.href = url
+	a.download = state.LSB.decodedSecretFile.name
+	document.body.appendChild(a)
+	a.click()
+
+	a.remove()
+	URL.revokeObjectURL(url)
+})
+
+LSB.encode.secretFileInput.addEventListener('change', e => {
+	assert(
+		e.target instanceof config.ids.LSB_ENCODE.secretFileInput.type,
+		'Event target of lsb secret file input should be equal to config file'
+	)
+	assert(e.target.files !== null, 'LSB secret file input should have files')
+
+	const file = e.target.files[0]
+	if (!file) {
+		throw new Error('No file selected. Please choose a file.')
+	}
+
+	state.LSB.encodeSecretFile = file
+})
+
+LSB.base.secretAsFileCheckbox.addEventListener('change', e => {
+	assert(
+		e.target instanceof config.ids.LSB.secretAsFileCheckbox.type,
+		'Event target on click lsb secret as file should be same type as config'
+	)
+
+	state.LSB.secretAsFile = e.target.checked
+
+	render()
+})
 
 UI.swapButton.addEventListener('click', e => {
 	assert(
@@ -193,23 +250,37 @@ LSB.encode.secretMessageInput.addEventListener('change', e => {
 })
 
 async function submitLSBEncode() {
-	if (state.secretMessage === '') {
-		throw new Error('Secret message is empty!')
-	}
-
 	if (state.originalImageFile === undefined) {
 		throw new Error('Image is not loaded!')
 	}
 
+	async function getLsbMessage() {
+		if (state.LSB.secretAsFile === true) {
+			if (state.LSB.encodeSecretFile === undefined) {
+				throw new Error('LSB Secret file should exists to run LSB encoding')
+			}
+
+			return await fileToByteArray(state.LSB.encodeSecretFile)
+		}
+
+		if (state.secretMessage === '') {
+			throw new Error('Secret message is empty!')
+		}
+
+		// *3 for support all letters
+		// https://developer.mozilla.org/en-US/docs/Web/API/TextEncoder/encodeInto
+		const message = new Uint8Array(state.secretMessage.length * 3)
+		new TextEncoder().encodeInto(state.secretMessage, message)
+
+		return message
+	}
+
+	const message = await getLsbMessage()
 	const originalImage = await fileToByteArray(state.originalImageFile)
 
-	const content = goLSB(
-		originalImage,
-		state.originalImageFile.type,
-		state.secretMessage
-	)
+	const content = goLSB(originalImage, state.originalImageFile.type, message)
 
-	console.log('JS', content)
+	console.log('JS result:', content, typeof content)
 
 	let resultImageType = state.originalImageFile.type
 
@@ -217,7 +288,7 @@ async function submitLSBEncode() {
 		resultImageType = 'image/png'
 	}
 
-	const blob = new Blob([content.buffer], { type: resultImageType })
+	const blob = new Blob([content], { type: resultImageType })
 	state.resultImageFile = new File([blob], `result.${blob.type}`, {
 		type: blob.type
 	})
@@ -238,14 +309,17 @@ async function submitLSBDecode() {
 		decodeImageType = 'image/png'
 	}
 
-	const decodedMessage = goDecodeLSB(
-		originalImage,
-		decodeImageType
-	)
+	const decoded = goDecodeLSB(originalImage, decodeImageType)
 
-	LSB.decode.secretMessageOutput.value = decodedMessage
+	if (state.LSB.secretAsFile) {
+		state.LSB.decodedSecretFile = new File([decoded], `result`)
+	} else {
+		LSB.decode.secretMessageOutput.value = decoded.toString()
+	}
 
-	console.log('Decoded message js:', decodedMessage)
+	console.log('Decoded message js:', decoded)
+
+	render()
 }
 
 GLOBAL.submitButton.addEventListener('click', () => {
@@ -342,6 +416,26 @@ function render() {
 
 	if (state.resultImageFile) {
 		GLOBAL.resultImagePreview.src = URL.createObjectURL(state.resultImageFile)
+	}
+
+	LSB.base.secretAsFileCheckbox.checked = state.LSB.secretAsFile
+
+	if (state.LSB.secretAsFile) {
+		LSB.encode.secretMessageInput.classList.add('hidden')
+		LSB.decode.secretMessageOutput.classList.add('hidden')
+		LSB.encode.secretFileInput.classList.remove('hidden')
+		LSB.decode.secretFileOutputButton.classList.remove('hidden')
+	} else {
+		LSB.encode.secretMessageInput.classList.remove('hidden')
+		LSB.decode.secretMessageOutput.classList.remove('hidden')
+		LSB.encode.secretFileInput.classList.add('hidden')
+		LSB.decode.secretFileOutputButton.classList.add('hidden')
+	}
+
+	if (state.LSB.decodedSecretFile) {
+		LSB.decode.secretFileOutputButton.disabled = false
+	} else {
+		LSB.decode.secretFileOutputButton.disabled = true
 	}
 }
 

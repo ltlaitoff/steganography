@@ -13,13 +13,13 @@ type Options struct {
 	VisualDebug bool
 }
 
-func Encode(containerImage image.Image, message string, options Options) image.RGBA {
+func Encode(containerImage image.Image, message []byte, options Options) image.RGBA {
 	bounds := containerImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), containerImage, bounds.Min, draw.Src)
 
 	res := ""
-	for _, r := range []byte(message) {
+	for _, r := range message {
 		res += fmt.Sprintf("%08b", r)
 	}
 

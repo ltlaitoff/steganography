@@ -67,6 +67,7 @@ interface Config {
 		}
 		LSB_DECODE: {
 			secretMessageOutput: ElementInfo<HTMLInputElement>
+			secretFileOutputButton: ElementInfo<HTMLButtonElement>
 		}
 	}
 	// 	// 	message: "message",
@@ -84,6 +85,12 @@ interface State {
 	originalImageFile: File | undefined
 	resultImageFile: File | undefined
 	secretMessage: string
+
+	LSB: {
+		secretAsFile: boolean
+		encodeSecretFile: File | undefined
+		decodedSecretFile: File | undefined
+	}
 }
 
 type Assert = (condition: boolean, message: string) => asserts condition
@@ -101,7 +108,7 @@ type FileToByteArray = (file: File) => Promise<Uint8Array>
  * Functions from WASM Golang
  */
 //prettier-ignore
-declare function goLSB(image: Uint8Array, imageType: string, secretMessage: string)
+declare function goLSB(image: Uint8Array, imageType: string, secretMessage: Uint8Array): Uint8Array
 //prettier-ignore
-declare function goDecodeLSB(image: Uint8Array, imageType: string)
+declare function goDecodeLSB(image: Uint8Array, imageType: string): Uint8Array
 declare function goDebug(debugMode: boolean): void

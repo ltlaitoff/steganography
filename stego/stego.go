@@ -35,7 +35,7 @@ func getResultImageType(imageType string) string {
 
 // TODO:: Remove imageType?
 
-func EncodeLSB(imageBytes []byte, imageType string, message string) []byte {
+func EncodeLSB(imageBytes []byte, imageType string, message []byte) []byte {
 	fmt.Println("Debug mode:", state.debugMode)
 
 	assert.Assert(imageType != "", "Image type should have value")

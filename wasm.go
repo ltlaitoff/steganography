@@ -13,7 +13,7 @@ func encodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 	fmt.Println("[GO]: Run LSB")
 
 	imageType := args[1].String()
-	message := args[2].String()
+	message := JSToGoBytes(args[2])
 	containerImage := JSToGoBytes(args[0])
 
 	encodedImage := stego.EncodeLSB(containerImage, imageType, message)
@@ -33,8 +33,8 @@ func decodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 func debug(this js.Value, args []js.Value) interface{} {
 	debugMode := args[0].Bool()
 	stego.SetDebugMode(debugMode)
-	
-	return nil;
+
+	return nil
 }
 
 func main() {
