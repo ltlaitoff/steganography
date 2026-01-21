@@ -31,11 +31,19 @@ func decodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 	return stego.DecodeLSB(image, imageType, messageLength)
 }
 
+func debug(this js.Value, args []js.Value) interface{} {
+	debugMode := args[0].Bool()
+	stego.SetDebugMode(debugMode)
+	
+	return nil;
+}
+
 func main() {
 	c := make(chan bool)
 
 	js.Global().Set("goLSB", js.FuncOf(encodeLsbWrapper))
 	js.Global().Set("goDecodeLSB", js.FuncOf(decodeLsbWrapper))
+	js.Global().Set("goDebug", js.FuncOf(debug))
 
 	<-c
 }

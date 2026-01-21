@@ -8,6 +8,18 @@ import (
 	"github.com/ltlaitoff/steganography/stego/lsb"
 )
 
+type State struct {
+	debugMode bool
+}
+
+var state State = State{
+	debugMode: false,
+}
+
+func SetDebugMode(debugMode bool) {
+	state.debugMode = debugMode
+}
+
 // Default is png, for jpeg png too
 func getResultImageType(imageType string) string {
 	if imageType == "image/png" {
@@ -24,6 +36,8 @@ func getResultImageType(imageType string) string {
 // TODO:: Remove imageType?
 
 func EncodeLSB(imageBytes []byte, imageType string, message string) []byte {
+	fmt.Println("Debug mode:", state.debugMode)
+
 	assert.Assert(imageType != "", "Image type should have value")
 
 	image, err := imageio.ParseImage(imageBytes, imageType)
@@ -32,7 +46,10 @@ func EncodeLSB(imageBytes []byte, imageType string, message string) []byte {
 		panic(fmt.Errorf("Something went wrong with parse image: %s", err))
 	}
 
-	encodedImage := lsb.Encode(image, message)
+	options := lsb.Options{
+		VisualDebug: state.debugMode,
+	}
+	encodedImage := lsb.Encode(image, message, options)
 
 	encodedBytes, err := imageio.EncodeImage(&encodedImage, getResultImageType(imageType))
 

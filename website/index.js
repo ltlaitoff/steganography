@@ -47,6 +47,8 @@ const config = {
 
 	// prettier-ignore
 	ids: {
+		DEBUG: { id: 'debug', type: HTMLInputElement },
+
 		LSB: {
 			keyInput: { id: 'lsb-secret-key-input', type: HTMLInputElement },
 			secretAsFileCheckbox: { id: 'lsb-secret-as-file', type: HTMLInputElement }
@@ -104,17 +106,30 @@ const LSB = {
 	}
 }
 
+const DEBUG = loadElement(config.ids.DEBUG)
+
 /**
  * @type {State}
  */
 const state = {
 	activeMethod: 'LSB',
 	activeOperation: 'ENCODE',
+	debugMode: false,
 
 	image: undefined,
 	imageFile: undefined,
 	message: ''
 }
+
+DEBUG.addEventListener('change', e => {
+	assert(
+		e.target instanceof config.ids.DEBUG.type,
+		'Event target on change debug should be same type as debug'
+	)
+
+	state.debugMode = e.target.checked
+	goDebug(state.debugMode)
+})
 
 GLOBAL.originalImageInput.addEventListener('change', e => {
 	const file = e.target.files[0]
@@ -153,7 +168,7 @@ LSB.encode.secretMessageInput.addEventListener('change', e => {
 	state.message = e.target.value
 })
 
-GLOBAL.submitButton.addEventListener('click', () => {
+function submitLSBEncode() {
 	const content = goLSB(state.image, state.imageFile.type, state.message)
 
 	console.log('JS', content)
@@ -161,7 +176,9 @@ GLOBAL.submitButton.addEventListener('click', () => {
 	GLOBAL.resultImagePreview.src = URL.createObjectURL(
 		new Blob([content.buffer], { type: 'image/bmp' })
 	)
+}
 
+function submitLSBDecode() {
 	let decodeImageType = state.imageFile.type
 
 	if (state.imageFile.type === 'image/jpeg') {
@@ -169,11 +186,27 @@ GLOBAL.submitButton.addEventListener('click', () => {
 	}
 
 	const decodedMessage = goDecodeLSB(
-		content,
+		state.image,
 		decodeImageType,
-		state.message.length
+		// TODO: Remove length
+		1000
 	)
+
+	LSB.decode.secretMessageOutput.value = decodedMessage
+
 	console.log('Decoded message js:', decodedMessage)
+}
+
+GLOBAL.submitButton.addEventListener('click', () => {
+	if (state.activeMethod == 'LSB') {
+		if (state.activeOperation == 'ENCODE') {
+			submitLSBEncode()
+		}
+
+		if (state.activeOperation == 'DECODE') {
+			submitLSBDecode()
+		}
+	}
 })
 
 UI.menu.base.addEventListener('change', e => {

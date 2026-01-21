@@ -7,12 +7,13 @@ import (
 	"image/draw"
 )
 
-// If enabled encoding will produce visible to eye result
-// Use to check what pixels are affected in result of algorithm
-var VISUAL_DEBUG bool = false
+type Options struct {
+	// If enabled encoding will produce visible to eye result
+	// Use to check what pixels are affected in result of algorithm
+	VisualDebug bool
+}
 
-// 
-func Encode(containerImage image.Image, message string) image.RGBA {
+func Encode(containerImage image.Image, message string, options Options) image.RGBA {
 	bounds := containerImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), containerImage, bounds.Min, draw.Src)
@@ -40,21 +41,21 @@ func Encode(containerImage image.Image, message string) image.RGBA {
 		b := uint8(cb >> 8)
 		a := uint8(ca >> 8)
 
-		// if r&1 != one {
-		// 	r ^= 1
-		// }
-
-		// if DEBUG {
-		if one == 1 {
-			r = 255
-			g = 0
-			b = 0
-		} else {
-			r = 0
-			g = 0
-			b = 0
+		if r&1 != one {
+			r ^= 1
 		}
-		// }
+
+		if options.VisualDebug {
+			if one == 1 {
+				r = 255
+				g = 0
+				b = 0
+			} else {
+				r = 0
+				g = 0
+				b = 0
+			}
+		}
 
 		rgba.Set(x, y, color.RGBA{r, g, b, a})
 

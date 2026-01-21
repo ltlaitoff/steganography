@@ -55,6 +55,7 @@ interface Config {
 	}
 
 	ids: {
+		DEBUG: ElementInfo<HTMLInputElement>,
 		LSB: {
 			keyInput: ElementInfo<HTMLInputElement>
 			secretAsFileCheckbox: ElementInfo<HTMLInputElement>
@@ -76,6 +77,8 @@ interface Config {
 interface State {
 	activeMethod: Methods
 	activeOperation: Operation
+
+	debugMode: boolean
 }
 
 type Assert = (condition: boolean, message: string) => asserts condition
@@ -87,3 +90,8 @@ type ConstuctorReturnType<T extends new (...args: any) => any> = T extends new (
 	: any
 
 type LoadElement = <T extends HTMLElement>(elementInfo: ElementInfo<T>) => T
+
+/**
+	* Functions from WASM Golang
+	*/
+declare function goDebug(debugMode: boolean): void
