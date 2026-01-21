@@ -31,6 +31,29 @@ interface Config {
 		submitButton: ElementInfo<HTMLButtonElement>
 	}
 
+	menu: {
+		name: {
+			methods: string
+			operation: string
+		}
+		value: {
+			methods: string[]
+			operation: string[]
+		}
+	}
+
+	UIids: {
+		menu: {
+			base: ElementInfo<HTMLDivElement>
+			methods: ElementInfo<HTMLDivElement>
+		}
+		LSB: {
+			baseBlock: ElementInfo<HTMLDivElement>
+			encodeBlock: ElementInfo<HTMLDivElement>
+			decodeBlock: ElementInfo<HTMLDivElement>
+		}
+	}
+
 	ids: {
 		LSB: {
 			keyInput: ElementInfo<HTMLInputElement>
@@ -41,8 +64,7 @@ interface Config {
 			secretFileInput: ElementInfo<HTMLInputElement>
 		}
 		LSB_DECODE: {
-			secretAsFileCheckbox: ElementInfo<HTMLInputElement>
-			secretMessageInput: ElementInfo<HTMLInputElement>
+			secretMessageOutput: ElementInfo<HTMLInputElement>
 		}
 	}
 	// 	// 	message: "message",
@@ -51,10 +73,17 @@ interface Config {
 	// })
 }
 
+interface State {
+	activeMethod: Methods
+	activeOperation: Operation
+}
+
 type Assert = (condition: boolean, message: string) => asserts condition
 
-
-type ConstuctorReturnType<T extends new (...args: any) => any> = T extends new (...args: any) => infer R ? R : any;
+type ConstuctorReturnType<T extends new (...args: any) => any> = T extends new (
+	...args: any
+) => infer R
+	? R
+	: any
 
 type LoadElement = <T extends HTMLElement>(elementInfo: ElementInfo<T>) => T
-

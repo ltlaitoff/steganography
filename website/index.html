@@ -26,11 +26,6 @@
 				accept=".bmp,.png,.jpg"
 			/>
 
-			<input
-				id="lsb-encode-secret-message-input"
-				type="text"
-			/>
-
 			<button id="submit-button">Submit</button>
 			<img
 				id="result-preview"
@@ -38,31 +33,113 @@
 				height="200"
 			/>
 
-			<input
-				class="hidden"
-				type="text"
-				id="lsb-decode-secret-key-input"
-			/>
-			<input
-				class="hidden"
-				type="text"
-				id="lsb-encode-secret-as-file"
-			/>
-			<input
-				class="hidden"
-				type="text"
-				id="lsb-encode-secret-file-input"
-			/>
-			<input
-				class="hidden"
-				type="text"
-				id="lsb-decode-secret-as-file"
-			/>
-			<input
-				class="hidden"
-				type="text"
-				id="lsb-decode-secret-message-input"
-			/>
+			<div
+				id="menu"
+				class=""
+			>
+				<div
+					id="menu-methods"
+					class=""
+				>
+					<label>
+						LSB
+						<input
+							checked
+							type="radio"
+							name="menu-method"
+							value="lsb"
+						/>
+					</label>
+					<label>
+						BPCS
+						<input
+							type="radio"
+							name="menu-method"
+							value="bpcs"
+						/>
+					</label>
+				</div>
+
+				<div
+					id="menu-operation"
+					class=""
+				>
+					<label>
+						Encode
+						<input
+							checked
+							type="radio"
+							name="menu-operation"
+							value="encode"
+						/>
+					</label>
+					<label>
+						Decode
+						<input
+							type="radio"
+							name="menu-operation"
+							value="decode"
+						/>
+					</label>
+				</div>
+			</div>
+
+			<div id="lsb">
+				<h2>LSB</h2>
+				<label class="hidden">
+					<div>LSB Key:</div>
+					<input
+						type="text"
+						id="lsb-secret-key-input"
+					/>
+				</label>
+
+				<label class="hidden">
+					<div>LSB as file</div>
+					<input
+						type="checkbox"
+						id="lsb-secret-as-file"
+					/>
+				</label>
+
+				<div
+					id="lsb-encode"
+					class=""
+				>
+					<h2>Encode</h2>
+
+					<label>
+						<div class="">Secret message</div>
+						<input
+							id="lsb-encode-secret-message-input"
+							type="text"
+						/>
+					</label>
+
+					<label class="hidden">
+						<div>Secret file</div>
+						<input
+							type="file"
+							id="lsb-encode-secret-file-input"
+						/>
+					</label>
+				</div>
+
+				<div
+					id="lsb-decode"
+					class=""
+				>
+					<h2>Decode</h2>
+
+					<label>
+						<div class="">Decoded message</div>
+						<input
+							type="text"
+							id="lsb-decode-secret-message-output"
+						/>
+					</label>
+				</div>
+			</div>
 		</div>
 
 		<script src="./wasm_exec.js"></script>
