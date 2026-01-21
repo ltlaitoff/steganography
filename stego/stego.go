@@ -46,8 +46,20 @@ func EncodeLSB(imageBytes []byte, imageType string, message []byte) []byte {
 		panic(fmt.Errorf("Something went wrong with parse image: %s", err))
 	}
 
+	key := lsb.Key{
+		StartX:           25,
+		StartY:           20,
+		EndX:             75,
+		EndY:             65,
+		GapX:             0,
+		GapY:             0,
+		ChannelsPerPixel: 3,
+		Channels:         []string{"R", "G", "B"},
+	}
+
 	options := lsb.Options{
 		VisualDebug: state.debugMode,
+		Key:         key,
 	}
 	encodedImage := lsb.Encode(image, message, options)
 
@@ -68,7 +80,22 @@ func DecodeLSB(imageBytes []byte, imageType string) string {
 		panic(fmt.Errorf("Something went wrong with parse image: %s", err))
 	}
 
-	result := lsb.Decode(image)
+	key := lsb.Key{
+		StartX:           25,
+		StartY:           20,
+		EndX:             75,
+		EndY:             65,
+		GapX:             0,
+		GapY:             0,
+		ChannelsPerPixel: 3,
+		Channels:         []string{"R", "G", "B"},
+	}
+
+	options := lsb.Options{
+		VisualDebug: state.debugMode,
+		Key:         key,
+	}
+	result := lsb.Decode(image, options)
 
 	return result
 }
