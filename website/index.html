@@ -13,217 +13,265 @@
 		/>
 	</head>
 	<body>
-		<div>
-			<img
-				id="original-preview"
-				width="200"
-				height="200"
-			/>
-			<input
-				type="file"
-				id="original-input"
-				name="Image container"
-				accept=".bmp,.png,.jpg"
-			/>
-
-			<button id="submit-button">Submit</button>
-			<button id="swap">SWAP</button>
-
-			<img
-				id="result-preview"
-				width="200"
-				height="200"
-			/>
-
-			<label>
-				Debug:
-				<input
-					type="checkbox"
-					id="debug"
-				/>
-			</label>
-
-			<div
-				id="menu"
-				class=""
-			>
+		<div class="layout">
+			<div class="layout--block layout--block_center">
 				<div
-					id="menu-methods"
-					class=""
+					class="menu"
+					id="menu"
 				>
-					<label>
-						LSB
-						<input
-							checked
-							type="radio"
-							name="menu-method"
-							value="lsb"
-						/>
-					</label>
-					<label>
-						BPCS
-						<input
-							type="radio"
-							name="menu-method"
-							value="bpcs"
-						/>
-					</label>
-				</div>
-
-				<div
-					id="menu-operation"
-					class=""
-				>
-					<label>
-						Encode
-						<input
-							checked
-							type="radio"
-							name="menu-operation"
-							value="encode"
-						/>
-					</label>
-					<label>
-						Decode
-						<input
-							type="radio"
-							name="menu-operation"
-							value="decode"
-						/>
-					</label>
-				</div>
-			</div>
-
-			<div id="lsb">
-				<h2>LSB</h2>
-				<div>
-					<div>LSB Key:</div>
-
 					<div
-						class=""
-						id="lsb-secter-key-block"
+						class="menu-block menu-block_main"
+						id="menu-methods"
 					>
-						<label>
-							startX:
+						<label class="menu-block--element">
+							LSB
 							<input
-								value="0"
-								type="number"
-								name="startX"
+								checked
+								type="radio"
+								name="menu-method"
+								value="lsb"
 							/>
 						</label>
-						<label>
-							startY:
+						<label class="menu-block--element">
+							BPCS
 							<input
-								value="0"
-								type="number"
-								name="startY"
-							/>
-						</label>
-						<label>
-							endX (0 = length):
-							<input
-								value="0"
-								type="number"
-								name="endX"
-							/>
-						</label>
-						<label>
-							endY (0 = length):
-							<input
-								value="0"
-								type="number"
-								name="endY"
-							/>
-						</label>
-						<label>
-							gapX:
-							<input
-								value="0"
-								type="number"
-								name="gapX"
-							/>
-						</label>
-						<label>
-							gapY:
-							<input
-								value="0"
-								type="number"
-								name="gapY"
-							/>
-						</label>
-						<label>
-							channelsPerPixel:
-							<input
-								value="3"
-								type="number"
-								name="channelsPerPixel"
-							/>
-						</label>
-						<label>
-							channels("RGB", "RG", "RB", ...):
-							<input
-								value="RBG"
-								type="text"
-								name="channels"
+								type="radio"
+								name="menu-method"
+								value="bpcs"
 							/>
 						</label>
 					</div>
-					<label>
-						Key:
-						<input
-							type="text"
-							id="lsb-secret-key-output"
-						/>
-					</label>
+
+					<div
+						id="menu-operation"
+						class="menu-block"
+					>
+						<label class="menu-block--element">
+							Encode
+							<input
+								checked
+								type="radio"
+								name="menu-operation"
+								value="encode"
+							/>
+						</label>
+						<label class="menu-block--element">
+							Decode
+							<input
+								type="radio"
+								name="menu-operation"
+								value="decode"
+							/>
+						</label>
+					</div>
 				</div>
 
-				<label>
-					<div>LSB as file</div>
-					<input
-						type="checkbox"
-						id="lsb-secret-as-file"
-					/>
-				</label>
-
 				<div
-					id="lsb-encode"
-					class=""
+					class="lsb"
+					id="lsb"
 				>
-					<h2>Encode</h2>
+					<hr class="divider" />
 
-					<label>
-						<div class="">Secret message</div>
-						<input
-							id="lsb-encode-secret-message-input"
-							type="text"
+					<div>
+						<div
+							class="block"
+							id="lsb-secter-key-block"
+						>
+							<h2 class="block--title">LSB Key</h2>
+							<div class="block--elements">
+								<label class="input-label">
+									<h2 class="input-title">Key</h2>
+									<input
+										type="text"
+										id="lsb-secret-key-output"
+										disabled
+									/>
+								</label>
+
+								<label class="input-label">
+									<h2 class="input-title">Start position of X</h2>
+									<input
+										value="0"
+										type="number"
+										name="startX"
+									/>
+								</label>
+								<label class="input-label">
+									<h2 class="input-title">Start position of Y</h2>
+									<input
+										value="0"
+										type="number"
+										name="startY"
+									/>
+								</label>
+								<label class="input-label">
+									<h2 class="input-title">
+										End position of X (0 is image end):
+									</h2>
+									<input
+										value="0"
+										type="number"
+										name="endX"
+									/>
+								</label>
+								<label class="input-label">
+									<h2 class="input-title">
+										End position of Y (0 is image end):
+									</h2>
+									<input
+										value="0"
+										type="number"
+										name="endY"
+									/>
+								</label>
+								<label class="input-label">
+									<h2 class="input-title">Gap beetween X:</h2>
+									<input
+										value="0"
+										type="number"
+										name="gapX"
+									/>
+								</label>
+								<label class="input-label">
+									<h2 class="input-title">Gap beetween Y:</h2>
+									<input
+										value="0"
+										type="number"
+										name="gapY"
+									/>
+								</label>
+								<label class="input-label">
+									<h2 class="input-title">
+										How much channels used per one pixel?
+									</h2>
+									<input
+										value="3"
+										type="number"
+										name="channelsPerPixel"
+									/>
+								</label>
+								<label class="input-label">
+									<h2 class="input-title">
+										Used channels? Example: "RBG", "RB", "G"
+									</h2>
+									<input
+										value="RBG"
+										type="text"
+										name="channels"
+									/>
+								</label>
+							</div>
+						</div>
+					</div>
+
+					<div class="block">
+						<h2 class="block--title">LSB Options</h2>
+						<label class="input-label">
+							<h2 class="input-title">LSB as file</h2>
+							<input
+								type="checkbox"
+								id="lsb-secret-as-file"
+							/>
+						</label>
+					</div>
+
+					<div
+						id="lsb-encode"
+						class="block"
+					>
+						<h2 class="block--title block--title_primary">Encode</h2>
+
+						<div class="block--elements">
+							<label class="input-label">
+								<div class="input-title">Secret message</div>
+								<input
+									id="lsb-encode-secret-message-input"
+									type="text"
+								/>
+							</label>
+
+							<label class="input-label">
+								<h2 class="input-title">Secret file</h2>
+								<input
+									type="file"
+									id="lsb-encode-secret-file-input"
+								/>
+							</label>
+						</div>
+					</div>
+
+					<div
+						id="lsb-decode"
+						class="block"
+					>
+						<h2 class="block--title block--title_secondary">Decode</h2>
+
+						<label class="input-label">
+							<h2 class="input-title">Decoded message</h2>
+							<input
+								type="text"
+								id="lsb-decode-secret-message-output"
+							/>
+						</label>
+
+						<button id="lsb-decode-secret-file-output-button">
+							Download secret file
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="layout--block">
+				<div class="images">
+					<div class="block">
+						<h2 class="block--title">Original image</h2>
+						<img
+							src="https://upload.wikimedia.org/wikipedia/commons/8/8c/Transparent.png"
+							class="image-preview"
+							id="original-preview"
+							width="200"
+							height="200"
 						/>
-					</label>
-
-					<label>
-						<div>Secret file</div>
 						<input
 							type="file"
-							id="lsb-encode-secret-file-input"
+							id="original-input"
+							name="Image container"
+							accept=".bmp,.png,.jpg"
 						/>
-					</label>
+					</div>
+
+					<div class="swap-button">
+						<button id="swap">SWAP</button>
+					</div>
+
+					<div class="block">
+						<h2 class="block--title">Result image</h2>
+						<img
+							src="https://upload.wikimedia.org/wikipedia/commons/8/8c/Transparent.png"
+							class="image-preview"
+							id="result-preview"
+							width="200"
+							height="200"
+						/>
+					</div>
 				</div>
 
-				<div
-					id="lsb-decode"
-					class=""
-				>
-					<h2>Decode</h2>
+				<div class="block">
+					<h2 class="block--title">Run options</h2>
 
-					<label>
-						<div class="">Decoded message</div>
+					<label class="input-label debug-label">
+						<h2 class="input-title">Debug</h2>
 						<input
-							type="text"
-							id="lsb-decode-secret-message-output"
+							type="checkbox"
+							id="debug"
 						/>
 					</label>
 
-					<button id="lsb-decode-secret-file-output-button">
-						Download secret file
+					<button
+						class="submit-button"
+						id="submit-button"
+					>
+						Submit
 					</button>
 				</div>
 			</div>
