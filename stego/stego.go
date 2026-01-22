@@ -2,6 +2,9 @@ package stego
 
 import (
 	"fmt"
+	"reflect"
+	"strconv"
+	"unicode"
 
 	"github.com/ltlaitoff/steganography/pkg/assert"
 	"github.com/ltlaitoff/steganography/pkg/imageio"
@@ -20,6 +23,81 @@ func SetDebugMode(debugMode bool) {
 	state.debugMode = debugMode
 }
 
+func parseLsbKey(key string) lsb.Key {
+	parsingSchema := map[rune]string{
+		'S': "StartX",
+		'T': "StartY",
+		'E': "EndX",
+		'N': "EndY",
+		'H': "GapX",
+		'V': "GapY",
+		'P': "ChannelsPerPixel",
+		'C': "Channels",
+	}
+
+	result := &lsb.Key{}
+	val := reflect.ValueOf(result).Elem()
+
+	current := ""
+	buffer := ""
+
+	saveCurrent := func() {
+		assert.Assert(current != "", "TODO 4")
+		field := val.FieldByName(current)
+
+		if !field.IsValid() {
+			fmt.Println("Field is not valid", field, "current:", current)
+			panic("TODO 0")
+		}
+
+		if current == "Channels" {
+			assert.Assert(field.Kind() == reflect.Slice, "TODO 1")
+
+			field.Set(reflect.Append(field, reflect.ValueOf(buffer)))
+		} else {
+			assert.Assert(field.Kind() == reflect.Int, "TODO 2")
+			num, err := strconv.Atoi(buffer)
+
+			if err != nil {
+				panic("Error")
+			}
+
+			field.SetInt(int64(num))
+		}
+
+	}
+
+	for _, char := range key {
+		if unicode.IsLetter(char) {
+			if property, ok := parsingSchema[char]; ok {
+				newField := val.FieldByName(property)
+
+				if newField.IsValid() {
+					if current != "" {
+						saveCurrent()
+					}
+
+					current = property
+					buffer = ""
+					continue
+				} else {
+					buffer += string(char)
+				}
+			} else {
+				buffer += string(char)
+			}
+		} else {
+			buffer += string(char)
+		}
+	}
+
+	if current != "" {
+		saveCurrent()
+	}
+
+	return *result
+}
+
 // Default is png, for jpeg png too
 func getResultImageType(imageType string) string {
 	if imageType == "image/png" {
@@ -35,7 +113,7 @@ func getResultImageType(imageType string) string {
 
 // TODO:: Remove imageType?
 
-func EncodeLSB(imageBytes []byte, imageType string, message []byte) []byte {
+func EncodeLSB(imageBytes []byte, imageType string, message []byte, key string) []byte {
 	fmt.Println("Debug mode:", state.debugMode)
 
 	assert.Assert(imageType != "", "Image type should have value")
@@ -46,20 +124,12 @@ func EncodeLSB(imageBytes []byte, imageType string, message []byte) []byte {
 		panic(fmt.Errorf("Something went wrong with parse image: %s", err))
 	}
 
-	key := lsb.Key{
-		StartX:           25,
-		StartY:           20,
-		EndX:             75,
-		EndY:             65,
-		GapX:             0,
-		GapY:             0,
-		ChannelsPerPixel: 3,
-		Channels:         []string{"R", "G", "B"},
-	}
+	lsbKey := parseLsbKey(key)
+	fmt.Println("Key:", lsbKey)
 
 	options := lsb.Options{
 		VisualDebug: state.debugMode,
-		Key:         key,
+		Key:         lsbKey,
 	}
 	encodedImage := lsb.Encode(image, message, options)
 
@@ -72,7 +142,7 @@ func EncodeLSB(imageBytes []byte, imageType string, message []byte) []byte {
 	return encodedBytes
 }
 
-func DecodeLSB(imageBytes []byte, imageType string) string {
+func DecodeLSB(imageBytes []byte, imageType string, key string) string {
 	assert.Assert(imageType != "", "Image type should have value")
 	image, err := imageio.ParseImage(imageBytes, imageType)
 
@@ -80,20 +150,12 @@ func DecodeLSB(imageBytes []byte, imageType string) string {
 		panic(fmt.Errorf("Something went wrong with parse image: %s", err))
 	}
 
-	key := lsb.Key{
-		StartX:           25,
-		StartY:           20,
-		EndX:             75,
-		EndY:             65,
-		GapX:             0,
-		GapY:             0,
-		ChannelsPerPixel: 3,
-		Channels:         []string{"R", "G", "B"},
-	}
+	lsbKey := parseLsbKey(key)
+	fmt.Println("Key:", lsbKey)
 
 	options := lsb.Options{
 		VisualDebug: state.debugMode,
-		Key:         key,
+		Key:         lsbKey,
 	}
 	result := lsb.Decode(image, options)
 

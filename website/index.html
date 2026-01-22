@@ -96,13 +96,86 @@
 
 			<div id="lsb">
 				<h2>LSB</h2>
-				<label class="hidden">
+				<div>
 					<div>LSB Key:</div>
-					<input
-						type="text"
-						id="lsb-secret-key-input"
-					/>
-				</label>
+
+					<div
+						class=""
+						id="lsb-secter-key-block"
+					>
+						<label>
+							startX:
+							<input
+								value="0"
+								type="number"
+								name="startX"
+							/>
+						</label>
+						<label>
+							startY:
+							<input
+								value="0"
+								type="number"
+								name="startY"
+							/>
+						</label>
+						<label>
+							endX (0 = length):
+							<input
+								value="0"
+								type="number"
+								name="endX"
+							/>
+						</label>
+						<label>
+							endY (0 = length):
+							<input
+								value="0"
+								type="number"
+								name="endY"
+							/>
+						</label>
+						<label>
+							gapX:
+							<input
+								value="0"
+								type="number"
+								name="gapX"
+							/>
+						</label>
+						<label>
+							gapY:
+							<input
+								value="0"
+								type="number"
+								name="gapY"
+							/>
+						</label>
+						<label>
+							channelsPerPixel:
+							<input
+								value="3"
+								type="number"
+								name="channelsPerPixel"
+							/>
+						</label>
+						<label>
+							channels("RGB", "RG", "RB", ...):
+							<input
+								value="RBG"
+								type="text"
+								name="channels"
+							/>
+						</label>
+					</div>
+					<label>
+						Key:
+						<input
+							type="text"
+							id="lsb-secret-key-output"
+						/>
+					</label>
+				</div>
 
 				<label>
 					<div>LSB as file</div>

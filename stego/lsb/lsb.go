@@ -245,6 +245,8 @@ func Decode(encodedImage image.Image, options Options) string {
 			for range key.ChannelsPerPixel {
 
 				currentChannel := key.Channels[channelCounter]
+		
+				fmt.Println("Current channel", currentChannel)
 
 				if currentChannel == "R" {
 					if r&1 == 1 {

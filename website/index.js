@@ -9,6 +9,33 @@ const UIVariants = Object.freeze({
 })
 
 /**
+ * @type LSBKeyParams[]
+ */
+const LSB_KEY_PARAMS = [
+	'startX',
+	'startY',
+	'endX',
+	'endY',
+	'gapX',
+	'gapY',
+	'channelsPerPixel',
+	'channels'
+]
+/**
+ * @type Record<LSBKeyParams, string>
+ */
+const LSB_KEY_PARSING_SCHEMA = {
+	startX: 'S',
+	startY: 'T',
+	endX: 'E',
+	endY: 'N',
+	gapX: 'H',
+	gapY: 'V',
+	channelsPerPixel: 'P',
+	channels: 'C'
+}
+
+/**
  * @type {Config}
  */
 const config = {
@@ -51,7 +78,8 @@ const config = {
 		DEBUG: { id: 'debug', type: HTMLInputElement },
 
 		LSB: {
-			keyInput: { id: 'lsb-secret-key-input', type: HTMLInputElement },
+			keyInputBlock: { id: "lsb-secter-key-block", type: HTMLDivElement },
+			keyOutput: { id: 'lsb-secret-key-output', type: HTMLInputElement },
 			secretAsFileCheckbox: { id: 'lsb-secret-as-file', type: HTMLInputElement }
 		},
 		LSB_ENCODE: {
@@ -97,7 +125,8 @@ const UI = {
 // prettier-ignore
 const LSB = {
 	base: {
-		keyInput: loadElement(config.ids.LSB.keyInput),
+		keyInputBlock: loadElement(config.ids.LSB.keyInputBlock),
+		keyOutput: loadElement(config.ids.LSB.keyOutput),
 		secretAsFileCheckbox: loadElement(config.ids.LSB.secretAsFileCheckbox),
 	},
 	encode: {
@@ -127,11 +156,38 @@ const state = {
 	LSB: {
 		secretAsFile: false,
 		encodeSecretFile: undefined,
-		decodedSecretFile: undefined
+		decodedSecretFile: undefined,
+		key: {
+			startX: 0,
+			startY: 0,
+			endX: 0,
+			endY: 0,
+			gapX: 0,
+			gapY: 0,
+			channelsPerPixel: 3,
+			channels: ['R', 'G', 'B']
+		}
 	}
 }
 
 // --
+
+LSB.base.keyInputBlock.addEventListener("change", e => {
+	assert(e.target instanceof HTMLInputElement, "Key input block change should be called only on input element!")
+	assert(LSB_KEY_PARAMS.includes(e.target.name), "Key input block input name should be one of LSB key params")
+	if (
+		e.target.name === 'channels'
+	) {
+		const value = e.target.value.split("")
+		state.LSB.key[e.target.name] = value
+		return
+	}
+
+	const value = Number(e.target.value)
+	assert(Number.isNaN(value) === false, "Input number value should not be NaN!")
+
+	state.LSB.key[e.target.name] = value
+})
 
 LSB.decode.secretFileOutputButton.addEventListener('click', e => {
 	assert(
@@ -278,7 +334,12 @@ async function submitLSBEncode() {
 	const message = await getLsbMessage()
 	const originalImage = await fileToByteArray(state.originalImageFile)
 
-	const content = goLSB(originalImage, state.originalImageFile.type, message)
+	const content = goLSB(
+		originalImage,
+		state.originalImageFile.type,
+		message,
+		generateLsbKey()
+	)
 
 	console.log('JS result:', content, typeof content)
 
@@ -309,7 +370,7 @@ async function submitLSBDecode() {
 		decodeImageType = 'image/png'
 	}
 
-	const decoded = goDecodeLSB(originalImage, decodeImageType)
+	const decoded = goDecodeLSB(originalImage, decodeImageType, generateLsbKey())
 
 	if (state.LSB.secretAsFile) {
 		state.LSB.decodedSecretFile = new File([decoded], `result`)
@@ -342,13 +403,13 @@ UI.menu.base.addEventListener('change', e => {
 
 	assert(
 		e.target.name == config.menu.name.methods ||
-			e.target.name == config.menu.name.operation,
+		e.target.name == config.menu.name.operation,
 		'Menu input name should be one of menu names'
 	)
 
 	assert(
 		config.menu.value.methods.includes(e.target.value) ||
-			config.menu.value.operation.includes(e.target.value),
+		config.menu.value.operation.includes(e.target.value),
 		'Menu input value should be one from menu config'
 	)
 
@@ -437,6 +498,23 @@ function render() {
 	} else {
 		LSB.decode.secretFileOutputButton.disabled = true
 	}
+}
+
+function generateLsbKey() {
+	let result = ''
+
+	for (const key of LSB_KEY_PARAMS) {
+		if (state.LSB.key[key] !== undefined) {
+
+			if (key !== 'channels') {
+				result += LSB_KEY_PARSING_SCHEMA[key] + state.LSB.key[key]
+			} else {
+				result += state.LSB.key[key].map(el => LSB_KEY_PARSING_SCHEMA[key] + el).join("")
+			}
+		}
+	}
+
+	return result
 }
 
 /**

@@ -15,8 +15,9 @@ func encodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 	imageType := args[1].String()
 	message := JSToGoBytes(args[2])
 	containerImage := JSToGoBytes(args[0])
+	key := args[3].String()
 
-	encodedImage := stego.EncodeLSB(containerImage, imageType, message)
+	encodedImage := stego.EncodeLSB(containerImage, imageType, message, key)
 
 	return GoToJsBytes(encodedImage)
 }
@@ -26,8 +27,9 @@ func decodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 
 	image := JSToGoBytes(args[0])
 	imageType := args[1].String()
+	key := args[2].String()
 
-	return stego.DecodeLSB(image, imageType)
+	return stego.DecodeLSB(image, imageType, key)
 }
 
 func debug(this js.Value, args []js.Value) interface{} {
