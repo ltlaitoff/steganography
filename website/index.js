@@ -520,6 +520,9 @@ async function submitBPCSDecode() {
 }
 
 GLOBAL.submitButton.addEventListener('click', () => {
+	state.errorMessage = ""
+	render()
+
 	if (state.activeMethod == 'LSB') {
 		if (state.activeOperation == 'ENCODE') {
 			submitLSBEncode()

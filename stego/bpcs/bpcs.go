@@ -1,6 +1,7 @@
 package bpcs
 
 import (
+	"fmt"
 	"image"
 )
 
@@ -20,6 +21,30 @@ func GrayToBinary(g uint8) uint8 {
 		b ^= g
 	}
 	return b
+}
+
+func CalculateCapacity(img *image.RGBA) int {
+	capacityBits := 0
+	bounds := img.Bounds()
+
+	for plane := 0; plane < 8; plane++ {
+		for y := bounds.Min.Y; y <= bounds.Max.Y-BlockSize; y += BlockSize {
+			for x := bounds.Min.X; x <= bounds.Max.X-BlockSize; x += BlockSize {
+				var block [8][8]uint8
+				for by := 0; by < BlockSize; by++ {
+					for bx := 0; bx < BlockSize; bx++ {
+						pixel := img.RGBAAt(x+bx, y+by)
+						block[by][bx] = (BinaryToGray(pixel.R) >> plane) & 1
+					}
+				}
+
+				if CalculateComplexity(block) > Threshold {
+					capacityBits += 63
+				}
+			}
+		}
+	}
+	return capacityBits
 }
 
 func CalculateComplexity(block [8][8]uint8) float64 {
@@ -47,16 +72,22 @@ func Conjugate(block *[8][8]uint8) {
 	}
 }
 
-func EncodeBPCS(img *image.RGBA, secretData []byte) {
+func EncodeBPCS(img *image.RGBA, secretData []byte) error {
 	dataBitIndex := 0
 	totalBits := len(secretData) * 8
 	bounds := img.Bounds()
+
+	maxBits := CalculateCapacity(img)
+
+	if totalBits > maxBits {
+		return fmt.Errorf("Insufficient capacity: need %d bits, have %d", totalBits, maxBits)
+	}
 
 	for plane := 0; plane < 8; plane++ {
 		for y := bounds.Min.Y; y <= bounds.Max.Y-BlockSize; y += BlockSize {
 			for x := bounds.Min.X; x <= bounds.Max.X-BlockSize; x += BlockSize {
 				if dataBitIndex >= totalBits {
-					return
+					return nil
 				}
 
 				var block [8][8]uint8
@@ -106,6 +137,8 @@ func EncodeBPCS(img *image.RGBA, secretData []byte) {
 			}
 		}
 	}
+
+	return nil
 }
 
 func DecodeBPCS(img *image.RGBA, expectedSize int) []byte {

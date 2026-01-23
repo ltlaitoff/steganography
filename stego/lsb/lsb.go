@@ -39,10 +39,6 @@ func Encode(containerImage image.Image, message []byte, options Options) (*image
 		res += fmt.Sprintf("%08b", r)
 	}
 
-	if len(res) > bounds.Size().X*bounds.Size().Y {
-		return nil, fmt.Errorf("Image is small for this message")
-	}
-
 	x, y := key.StartX, key.StartY
 
 	if key.StartX < bounds.Min.X {
@@ -61,6 +57,23 @@ func Encode(containerImage image.Image, message []byte, options Options) (*image
 
 	if key.EndY == 0 || key.EndY > bounds.Max.Y {
 		endY = bounds.Max.Y
+	}
+
+	pixelsCount := 0
+	rowCount := (endY - y + key.GapY) / (key.GapY + 1)
+
+	if rowCount <= 1 {
+		pixelsCount = (endX - x) / (key.GapX + 1)
+	} else {
+		pixelsCount = ((bounds.Max.X - x + key.GapX) / (key.GapX + 1)) +
+			((bounds.Max.X - bounds.Min.X + key.GapX) / (key.GapX + 1) * (rowCount - 2)) +
+			((endX - bounds.Min.X + key.GapX) / (key.GapX + 1))
+	}
+
+	capacityBits := pixelsCount * key.ChannelsPerPixel
+
+	if len(res) > capacityBits {
+		return nil, fmt.Errorf("Insufficient capacity: need %d bits, have %d", len(res), capacityBits)
 	}
 
 	counter := 0

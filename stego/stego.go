@@ -213,7 +213,11 @@ func EncodeBPCS(imageBytes []byte, imageType string, message []byte) ([]byte, er
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), inputImage, bounds.Min, draw.Src)
 
-	bpcs.EncodeBPCS(rgba, appendSecretLengthToSecret(message))
+	err = bpcs.EncodeBPCS(rgba, appendSecretLengthToSecret(message))
+	
+	if err != nil {
+		return nil, err
+	}
 
 	encodedBytes, err := imageio.EncodeImage(rgba, getResultImageType(imageType))
 
