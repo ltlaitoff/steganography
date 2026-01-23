@@ -310,12 +310,7 @@ async function prepareSecretMessage() {
 		throw new Error('Secret message is empty!')
 	}
 
-	// *3 for support all letters
-	// https://developer.mozilla.org/en-US/docs/Web/API/TextEncoder/encodeInto
-	const message = new Uint8Array(state.secretMessage.length * 3)
-	new TextEncoder().encodeInto(state.secretMessage, message)
-
-	return message
+	return new TextEncoder().encode(state.secretMessage)
 }
 
 async function submitLSBEncode() {
