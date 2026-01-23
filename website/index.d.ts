@@ -57,16 +57,18 @@ interface Config {
 
 	ids: {
 		DEBUG: ElementInfo<HTMLInputElement>
+		SHARED: {
+			secretAsFileCheckbox: ElementInfo<HTMLInputElement>
+		},
 		LSB: {
 			keyInputBlock: ElementInfo<HTMLDivElement>
 			keyOutput: ElementInfo<HTMLInputElement>
-			secretAsFileCheckbox: ElementInfo<HTMLInputElement>
 		}
-		LSB_ENCODE: {
+		ENCODE: {
 			secretMessageInput: ElementInfo<HTMLInputElement>
 			secretFileInput: ElementInfo<HTMLInputElement>
 		}
-		LSB_DECODE: {
+		DECODE: {
 			secretMessageOutput: ElementInfo<HTMLInputElement>
 			secretFileOutputButton: ElementInfo<HTMLButtonElement>
 		}
@@ -78,14 +80,14 @@ interface Config {
 }
 
 interface LSBKey {
-	startX?: number,
-	startY?: number,
-	endX?: number,
-	endY?: number,
-	gapX?: number,
-	gapY?: number,
-	channelsPerPixel?: number,
-	channels?: string[],
+	startX?: number
+	startY?: number
+	endX?: number
+	endY?: number
+	gapX?: number
+	gapY?: number
+	channelsPerPixel?: number
+	channels?: string[]
 }
 
 type LSBKeyParams = keyof LSBKey
@@ -98,12 +100,14 @@ interface State {
 
 	originalImageFile: File | undefined
 	resultImageFile: File | undefined
+
+	secretAsFile: boolean
 	secretMessage: string
 
-	LSB: {
-		secretAsFile: boolean
 		encodeSecretFile: File | undefined
 		decodedSecretFile: File | undefined
+
+	LSB: {
 		key: LSBKey
 	}
 }
@@ -123,12 +127,16 @@ type FileToByteArray = (file: File) => Promise<Uint8Array>
  * Functions from WASM Golang
  */
 //prettier-ignore
-declare function goLSB(image: Uint8Array, imageType: string, secretMessage: Uint8Array, key: string): Uint8Array
+declare function goEncodeLSB(image: Uint8Array, imageType: string, secretMessage: Uint8Array, key: string): Uint8Array
 //prettier-ignore
 declare function goDecodeLSB(image: Uint8Array, imageType: string, key: string): Uint8Array
+//prettier-ignore
+declare function goEncodeBPCS(image: Uint8Array, imageType: string, secretMessage: Uint8Array): Uint8Array
+//prettier-ignore
+declare function goDecodeBPCS(image: Uint8Array, imageType: string): Uint8Array
+//prettier-ignore
 declare function goDebug(debugMode: boolean): void
 
 interface Array<T> {
-    includes(searchElement: any, fromIndex?: number): searchElement is T;
+	includes(searchElement: any, fromIndex?: number): searchElement is T
 }
-
