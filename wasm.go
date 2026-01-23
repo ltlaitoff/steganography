@@ -10,16 +10,21 @@ import (
 )
 
 func encodeLsbWrapper(this js.Value, args []js.Value) interface{} {
-	fmt.Println("[GO]: Run LSB")
-
 	imageType := args[1].String()
 	message := JSToGoBytes(args[2])
 	containerImage := JSToGoBytes(args[0])
 	key := args[3].String()
 
-	encodedImage := stego.EncodeLSB(containerImage, imageType, message, key)
+	encodedImage, err := stego.EncodeLSB(containerImage, imageType, message, key)
 
-	return GoToJsBytes(encodedImage)
+	if err != nil {
+		return JsError(err.Error())
+	}
+
+	return js.ValueOf(map[string]any{
+		"ok":   true,
+		"data": GoToJsBytes(encodedImage),
+	})
 }
 
 func decodeLsbWrapper(this js.Value, args []js.Value) interface{} {
@@ -29,7 +34,16 @@ func decodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 	imageType := args[1].String()
 	key := args[2].String()
 
-	return stego.DecodeLSB(image, imageType, key)
+	result, err := stego.DecodeLSB(image, imageType, key)
+
+	if err != nil {
+		return JsError(err.Error())
+	}
+
+	return js.ValueOf(map[string]any{
+		"ok":   true,
+		"data": result,
+	})
 }
 
 func encodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
@@ -39,9 +53,16 @@ func encodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
 	message := JSToGoBytes(args[2])
 	containerImage := JSToGoBytes(args[0])
 
-	encodedImage := stego.EncodeBPCS(containerImage, imageType, message)
+	encodedImage, err := stego.EncodeBPCS(containerImage, imageType, message)
 
-	return GoToJsBytes(encodedImage)
+	if err != nil {
+		return JsError(err.Error())
+	}
+
+	return js.ValueOf(map[string]any{
+		"ok":   true,
+		"data": GoToJsBytes(encodedImage),
+	})
 }
 
 func decodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
@@ -50,7 +71,16 @@ func decodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
 	image := JSToGoBytes(args[0])
 	imageType := args[1].String()
 
-	return stego.DecodeBPCS(image, imageType)
+	result, err := stego.DecodeBPCS(image, imageType)
+
+	if err != nil {
+		return JsError(err.Error())
+	}
+
+	return js.ValueOf(map[string]any{
+		"ok":   true,
+		"data": result,
+	})
 }
 
 func debug(this js.Value, args []js.Value) interface{} {

@@ -27,15 +27,7 @@ type Options struct {
 	Key Key
 }
 
-func visualDebug(active bool) (uint8, uint8, uint8) {
-	if active == false {
-		return 0, 0, 0
-	}
-
-	return 255, 0, 0
-}
-
-func Encode(containerImage image.Image, message []byte, options Options) image.RGBA {
+func Encode(containerImage image.Image, message []byte, options Options) (*image.RGBA, error) {
 	bounds := containerImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), containerImage, bounds.Min, draw.Src)
@@ -48,7 +40,7 @@ func Encode(containerImage image.Image, message []byte, options Options) image.R
 	}
 
 	if len(res) > bounds.Size().X*bounds.Size().Y {
-		panic("Image is small for this message")
+		return nil, fmt.Errorf("Image is small for this message")
 	}
 
 	x, y := key.StartX, key.StartY
@@ -181,10 +173,10 @@ func Encode(containerImage image.Image, message []byte, options Options) image.R
 		}
 	}
 
-	return *rgba
+	return rgba, nil
 }
 
-func Decode(encodedImage image.Image, options Options, length int) []byte {
+func Decode(encodedImage image.Image, options Options, length int) ([]byte, error) {
 	bounds := encodedImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), encodedImage, bounds.Min, draw.Src)
@@ -196,10 +188,8 @@ func Decode(encodedImage image.Image, options Options, length int) []byte {
 	i := 7
 
 	addByteToData := func() {
-		fmt.Println("debug add byte to data", i)
 		i--
 		if i < 0 {
-			fmt.Println("Add byte to data: ", newByte)
 			data = append(data, newByte)
 			i = 7
 			newByte = 0
@@ -241,12 +231,8 @@ func Decode(encodedImage image.Image, options Options, length int) []byte {
 			g := uint8(cg >> 8)
 			b := uint8(cb >> 8)
 
-			fmt.Println("Check pixel (", x, ", ", y, ")!")
 			for range key.ChannelsPerPixel {
-
 				currentChannel := key.Channels[channelCounter]
-
-				fmt.Println("Current channel", currentChannel)
 
 				if currentChannel == "R" {
 					if r&1 == 1 {
@@ -283,10 +269,10 @@ func Decode(encodedImage image.Image, options Options, length int) []byte {
 			}
 
 			if len(data) >= length {
-				return data
+				return data, nil
 			}
 		}
 	}
 
-	return data
+	return data, nil
 }

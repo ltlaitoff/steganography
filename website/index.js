@@ -68,7 +68,13 @@ const config = {
 		lsbBlock: { id: "lsb", type: HTMLDivElement },
 		encodeBlock: { id: "encode", type: HTMLDivElement },
 		decodeBlock: { id: "decode", type: HTMLDivElement },
-		swapButton: { id: "swap", type: HTMLButtonElement }
+		swapButton: { id: "swap", type: HTMLButtonElement },
+
+		ERROR: {
+			block: { id: "error", type: HTMLDivElement },
+			message: { id: "error-message", type: HTMLDivElement },
+			button: { id: "error-close", type: HTMLButtonElement },
+		}
 	},
 
 	// prettier-ignore
@@ -90,6 +96,7 @@ const config = {
 			keyInputBlock: { id: "lsb-secret-key-block", type: HTMLDivElement },
 			keyOutput: { id: 'lsb-secret-key-output', type: HTMLInputElement },
 		},
+
 	}
 }
 
@@ -109,7 +116,12 @@ const UI = {
 	lsbBlock: loadElement(config.UIids.lsbBlock),
 	encodeBlock: loadElement(config.UIids.encodeBlock),
 	decodeBlock: loadElement(config.UIids.decodeBlock),
-	swapButton: loadElement(config.UIids.swapButton)
+	swapButton: loadElement(config.UIids.swapButton),
+	ERROR: {
+		block: loadElement(config.UIids.ERROR.block),
+		message: loadElement(config.UIids.ERROR.message),
+		button: loadElement(config.UIids.ERROR.button),
+	}
 }
 
 const SHARED = {
@@ -120,7 +132,9 @@ const SHARED = {
 	},
 	decode: {
 		secretMessageOutput: loadElement(config.ids.DECODE.secretMessageOutput),
-		secretFileOutputButton: loadElement(config.ids.DECODE.secretFileOutputButton)
+		secretFileOutputButton: loadElement(
+			config.ids.DECODE.secretFileOutputButton
+		)
 	}
 }
 
@@ -158,24 +172,40 @@ const state = {
 			channelsPerPixel: 3,
 			channels: ['R', 'G', 'B']
 		}
-	}
+	},
+
+	errorMessage: ""
 }
 
 // --
 
-LSB.keyInputBlock.addEventListener("change", e => {
-	assert(e.target instanceof HTMLInputElement, "Key input block change should be called only on input element!")
-	assert(LSB_KEY_PARAMS.includes(e.target.name), "Key input block input name should be one of LSB key params")
-	if (
-		e.target.name === 'channels'
-	) {
-		const value = e.target.value.split("")
+UI.ERROR.button.addEventListener("click", e => {
+	assert(
+		e.target instanceof config.UIids.ERROR.button.type,
+		'Event target on close error button should be equal to config type!'
+	)
+
+	state.errorMessage = ""
+	render()
+})
+
+LSB.keyInputBlock.addEventListener('change', e => {
+	assert(
+		e.target instanceof HTMLInputElement,
+		'Key input block change should be called only on input element!'
+	)
+	assert(
+		LSB_KEY_PARAMS.includes(e.target.name),
+		'Key input block input name should be one of LSB key params'
+	)
+	if (e.target.name === 'channels') {
+		const value = e.target.value.split('')
 		state.LSB.key[e.target.name] = value
 		return
 	}
 
 	const value = Number(e.target.value)
-	assert(Number.isNaN(value) === false, "Input number value should not be NaN!")
+	assert(Number.isNaN(value) === false, 'Input number value should not be NaN!')
 
 	state.LSB.key[e.target.name] = value
 })
@@ -296,7 +326,6 @@ SHARED.encode.secretMessageInput.addEventListener('change', e => {
 	state.secretMessage = e.target.value
 })
 
-
 async function prepareSecretMessage() {
 	if (state.secretAsFile === true) {
 		if (state.encodeSecretFile === undefined) {
@@ -321,13 +350,30 @@ async function submitLSBEncode() {
 	const message = await prepareSecretMessage()
 	const originalImage = await fileToByteArray(state.originalImageFile)
 
-	const content = goEncodeLSB(
-		originalImage,
-		state.originalImageFile.type,
-		message,
-		generateLsbKey()
+	let result = undefined
+	try {
+		result = goEncodeLSB(
+			originalImage,
+			state.originalImageFile.type,
+			message,
+			generateLsbKey()
+		)
+	} catch (err) {
+		errorHandler(err)
+		return
+	}
+
+	assert(
+		result !== undefined,
+		'Golang function result should be always defined'
 	)
 
+	if (result.ok == false) {
+		showError(`Error! ${result.message}`)
+		return
+	}
+
+	const content = result.data
 	console.log('JS result:', content, typeof content)
 
 	let resultImageType = state.originalImageFile.type
@@ -357,15 +403,34 @@ async function submitLSBDecode() {
 		decodeImageType = 'image/png'
 	}
 
-	const decoded = goDecodeLSB(originalImage, decodeImageType, generateLsbKey())
+	let result
 
-	if (state.secretAsFile) {
-		state.decodedSecretFile = new File([decoded], `result`)
-	} else {
-		SHARED.decode.secretMessageOutput.value = decoded.toString()
+	try {
+		result = goDecodeLSB(originalImage, decodeImageType, generateLsbKey())
+	} catch (err) {
+		errorHandler(err)
+		return
 	}
 
-	console.log('Decoded message js:', decoded)
+	assert(
+		result !== undefined,
+		'Golang function result should be always defined'
+	)
+
+	if (result.ok == false) {
+		showError(`Error! ${result.message}`)
+		return
+	}
+
+	const content = result.data
+
+	if (state.secretAsFile) {
+		state.decodedSecretFile = new File([content], `result`)
+	} else {
+		SHARED.decode.secretMessageOutput.value = content.toString()
+	}
+
+	console.log('Decoded message js:', content)
 
 	render()
 }
@@ -378,11 +443,25 @@ async function submitBPCSEncode() {
 	const message = await prepareSecretMessage()
 	const originalImage = await fileToByteArray(state.originalImageFile)
 
-	const content = goEncodeBPCS(
-		originalImage,
-		state.originalImageFile.type,
-		message
+	let result
+	try {
+		result = goEncodeBPCS(originalImage, state.originalImageFile.type, message)
+	} catch (err) {
+		errorHandler(err)
+		return
+	}
+
+	assert(
+		result !== undefined,
+		'Golang function result should be always defined'
 	)
+
+	if (result.ok == false) {
+		showError(`Error! ${result.message}`)
+		return
+	}
+
+	const content = result.data
 
 	let resultImageType = state.originalImageFile.type
 	if (state.originalImageFile.type === 'image/jpeg') {
@@ -403,21 +482,39 @@ async function submitBPCSDecode() {
 	}
 
 	const originalImage = await fileToByteArray(state.originalImageFile)
-	
+
 	let decodeImageType = state.originalImageFile.type
 	if (state.originalImageFile.type === 'image/jpeg') {
 		decodeImageType = 'image/png'
 	}
 
-	const decoded = goDecodeBPCS(originalImage, decodeImageType)
-
-	if (state.secretAsFile) {
-		state.decodedSecretFile = new File([decoded], `result`)
-	} else {
-		SHARED.decode.secretMessageOutput.value = decoded.toString()
+	let result
+	try {
+		result = goDecodeBPCS(originalImage, decodeImageType)
+	} catch (err) {
+		errorHandler(err)
+		return
 	}
 
-	console.log('[JS] BPCS decoded message:', decoded)
+	assert(
+		result !== undefined,
+		'Golang function result should be always defined'
+	)
+
+	if (result.ok == false) {
+		showError(`Error! ${result.message}`)
+		return
+	}
+
+	const content = result.data
+
+	if (state.secretAsFile) {
+		state.decodedSecretFile = new File([content], `result`)
+	} else {
+		SHARED.decode.secretMessageOutput.value = content.toString()
+	}
+
+	console.log('[JS] BPCS decoded message:', content)
 
 	render()
 }
@@ -547,6 +644,14 @@ function render() {
 	} else {
 		SHARED.decode.secretFileOutputButton.disabled = true
 	}
+
+	if (state.errorMessage !== "") {
+		UI.ERROR.block.dataset['active'] = "true"
+		UI.ERROR.message.textContent = state.errorMessage
+	} else {
+		UI.ERROR.block.dataset['active'] = "false"
+		UI.ERROR.message.textContent = state.errorMessage
+	}
 }
 
 function generateLsbKey() {
@@ -554,16 +659,38 @@ function generateLsbKey() {
 
 	for (const key of LSB_KEY_PARAMS) {
 		if (state.LSB.key[key] !== undefined) {
-
 			if (key !== 'channels') {
 				result += LSB_KEY_PARSING_SCHEMA[key] + state.LSB.key[key]
 			} else {
-				result += state.LSB.key[key].map(el => LSB_KEY_PARSING_SCHEMA[key] + el).join("")
+				result += state.LSB.key[key]
+					.map(el => LSB_KEY_PARSING_SCHEMA[key] + el)
+					.join('')
 			}
 		}
 	}
 
 	return result
+}
+
+/**
+ * @type {ErrorHandler}
+ */
+function errorHandler(err) {
+	if (err instanceof WebAssembly.RuntimeError) {
+		showError('Catch WebAssembly.RuntimeError! Check console for more details!')
+		return
+	}
+
+	console.log('Error', err)
+	showError('Catch unknown error! Check console for more details!')
+}
+
+/**
+ * @type {ShowError}
+ */
+function showError(message) {
+	state.errorMessage = message
+	render()
 }
 
 /**

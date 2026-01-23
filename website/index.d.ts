@@ -51,13 +51,18 @@ interface Config {
 		encodeBlock: ElementInfo<HTMLDivElement>
 		decodeBlock: ElementInfo<HTMLDivElement>
 		swapButton: ElementInfo<HTMLButtonElement>
+		ERROR: {
+			block: ElementInfo<HTMLDivElement>,
+			message: ElementInfo<HTMLDivElement>,
+			button: ElementInfo<HTMLButtonElement>
+		}
 	}
 
 	ids: {
 		DEBUG: ElementInfo<HTMLInputElement>
 		SHARED: {
 			secretAsFileCheckbox: ElementInfo<HTMLInputElement>
-		},
+		}
 		LSB: {
 			keyInputBlock: ElementInfo<HTMLDivElement>
 			keyOutput: ElementInfo<HTMLInputElement>
@@ -69,7 +74,7 @@ interface Config {
 		DECODE: {
 			secretMessageOutput: ElementInfo<HTMLInputElement>
 			secretFileOutputButton: ElementInfo<HTMLButtonElement>
-		}
+		},
 	}
 	// 	// 	message: "message",
 	// }
@@ -108,6 +113,8 @@ interface State {
 	LSB: {
 		key: LSBKey
 	}
+
+	errorMessage: string
 }
 
 type Assert = (condition: boolean, message: string) => asserts condition
@@ -121,17 +128,31 @@ type ConstuctorReturnType<T extends new (...args: any) => any> = T extends new (
 type LoadElement = <T extends HTMLElement>(elementInfo: ElementInfo<T>) => T
 type FileToByteArray = (file: File) => Promise<Uint8Array>
 
+type ErrorHandler = (err: unknown) => void
+type ShowError = (message: string) => void
+
 /**
  * Functions from WASM Golang
  */
+
+interface GolangError {
+	ok: false
+	message: string
+}
+
+interface GolangOk<T> {
+	ok: true
+	data: T
+}
+
 //prettier-ignore
-declare function goEncodeLSB(image: Uint8Array, imageType: string, secretMessage: Uint8Array, key: string): Uint8Array
+declare function goEncodeLSB(image: Uint8Array, imageType: string, secretMessage: Uint8Array, key: string): GolangError | GolangOk<Uint8Array>
 //prettier-ignore
-declare function goDecodeLSB(image: Uint8Array, imageType: string, key: string): Uint8Array
+declare function goDecodeLSB(image: Uint8Array, imageType: string, key: string): GolangError | GolangOk<Uint8Array>
 //prettier-ignore
-declare function goEncodeBPCS(image: Uint8Array, imageType: string, secretMessage: Uint8Array): Uint8Array
+declare function goEncodeBPCS(image: Uint8Array, imageType: string, secretMessage: Uint8Array): GolangError | GolangOk<Uint8Array>
 //prettier-ignore
-declare function goDecodeBPCS(image: Uint8Array, imageType: string): Uint8Array
+declare function goDecodeBPCS(image: Uint8Array, imageType: string): GolangError | GolangOk<Uint8Array>
 //prettier-ignore
 declare function goDebug(debugMode: boolean): void
 

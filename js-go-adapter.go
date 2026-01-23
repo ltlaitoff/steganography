@@ -19,3 +19,10 @@ func GoToJsBytes(goImageBytes []byte) js.Value {
 
 	return uint8Array
 }
+
+func JsError(message string) any {
+	return js.ValueOf(map[string]any{
+		"ok":    false,
+		"message": message,
+	})
+}
