@@ -130,26 +130,13 @@ func EncodeLSB(imageBytes []byte, imageType string, message []byte, key string) 
 	lsbKey := parseLsbKey(key)
 	fmt.Println("Key:", lsbKey)
 
-	// options := lsb.Options{
-	// 	VisualDebug: state.debugMode,
-	// 	Key:         lsbKey,
-	// }
-	// encodedImage := lsb.Encode(inputImage, message, options)
+	options := lsb.Options{
+		VisualDebug: state.debugMode,
+		Key:         lsbKey,
+	}
+	encodedImage := lsb.Encode(inputImage, message, options)
 
-	// encodedBytes, err := imageio.EncodeImage(&encodedImage, getResultImageType(imageType))
-	//
-	// if err != nil {
-	// 	panic(fmt.Errorf("Something went wrong with encode image: %s", err))
-	// }
-
-	fmt.Println("TEST BPCS!")
-
-	bounds := inputImage.Bounds()
-	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
-	draw.Draw(rgba, rgba.Bounds(), inputImage, bounds.Min, draw.Src)
-	bpcs.EncodeBPCS(rgba, message)
-
-	encodedBytes, err := imageio.EncodeImage(rgba, getResultImageType(imageType))
+	encodedBytes, err := imageio.EncodeImage(&encodedImage, getResultImageType(imageType))
 
 	if err != nil {
 		panic(fmt.Errorf("Something went wrong with encode image: %s", err))
@@ -169,17 +156,50 @@ func DecodeLSB(imageBytes []byte, imageType string, key string) string {
 	lsbKey := parseLsbKey(key)
 	fmt.Println("Key:", lsbKey)
 
+	options := lsb.Options{
+		VisualDebug: state.debugMode,
+		Key:         lsbKey,
+	}
+	result := lsb.Decode(inputImage, options)
+
+	return result
+}
+
+func EncodeBPCS(imageBytes []byte, imageType string, message []byte) []byte {
+	assert.Assert(imageType != "", "Image type should have value")
+
+	inputImage, err := imageio.ParseImage(imageBytes, imageType)
+
+	if err != nil {
+		panic(fmt.Errorf("Something went wrong with parse image: %s", err))
+	}
+
+	bounds := inputImage.Bounds()
+	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
+	draw.Draw(rgba, rgba.Bounds(), inputImage, bounds.Min, draw.Src)
+	bpcs.EncodeBPCS(rgba, message)
+
+	encodedBytes, err := imageio.EncodeImage(rgba, getResultImageType(imageType))
+
+	if err != nil {
+		panic(fmt.Errorf("Something went wrong with encode image: %s", err))
+	}
+
+	return encodedBytes
+}
+
+func DecodeBPCS(imageBytes []byte, imageType string) string {
+	assert.Assert(imageType != "", "Image type should have value")
+	inputImage, err := imageio.ParseImage(imageBytes, imageType)
+
+	if err != nil {
+		panic(fmt.Errorf("Something went wrong with parse image: %s", err))
+	}
+
 	bounds := inputImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), inputImage, bounds.Min, draw.Src)
 	result := bpcs.DecodeBPCS(rgba, 100)
 
-	fmt.Println(result, string(result))
-	// options := lsb.Options{
-	// 	VisualDebug: state.debugMode,
-	// 	Key:         lsbKey,
-	// }
-	// result := lsb.Decode(inputImage, options)
-
-	return "tbpcs"
+	return string(result)
 }

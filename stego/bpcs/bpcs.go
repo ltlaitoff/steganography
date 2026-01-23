@@ -108,18 +108,18 @@ func EncodeBPCS(img *image.RGBA, secretData []byte) {
 	}
 }
 
-func DecodeBPCS(img *image.RGBA) []byte {
-	secretData := make([]byte,0)
+func DecodeBPCS(img *image.RGBA, expectedSize int) []byte {
+	secretData := make([]byte, expectedSize)
 	dataBitIndex := 0
-	// totalBits := expectedSize * 8
+	totalBits := expectedSize * 8
 	bounds := img.Bounds()
 
 	for plane := 0; plane < 8; plane++ {
 		for y := bounds.Min.Y; y <= bounds.Max.Y-BlockSize; y += BlockSize {
 			for x := bounds.Min.X; x <= bounds.Max.X-BlockSize; x += BlockSize {
-				// if dataBitIndex >= totalBits {
-				// 	return secretData
-				// }
+				if dataBitIndex >= totalBits {
+					return secretData
+				}
 
 				var block [8][8]uint8
 				for by := 0; by < BlockSize; by++ {
@@ -136,9 +136,9 @@ func DecodeBPCS(img *image.RGBA) []byte {
 					}
 
 					for i := 1; i < 64; i++ {
-						// if dataBitIndex >= totalBits {
-						// 	return secretData
-						// }
+						if dataBitIndex >= totalBits {
+							return secretData
+						}
 						bit := block[i/8][i%8]
 						byteIdx := dataBitIndex / 8
 						shift := uint(7 - (dataBitIndex % 8))
