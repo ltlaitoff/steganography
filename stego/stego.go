@@ -1,6 +1,7 @@
 package stego
 
 import (
+	"encoding/binary"
 	"fmt"
 	"image"
 	"image/draw"
@@ -116,6 +117,13 @@ func getResultImageType(imageType string) string {
 
 // TODO:: Remove imageType?
 
+func appendSecretLengthToSecret(message []byte) []byte {
+	secretLength := make([]byte, 4)
+	binary.LittleEndian.PutUint32(secretLength, uint32(len(message)))
+
+	return append(secretLength, message...)
+}
+
 func EncodeLSB(imageBytes []byte, imageType string, message []byte, key string) []byte {
 	fmt.Println("Debug mode:", state.debugMode)
 
@@ -134,7 +142,7 @@ func EncodeLSB(imageBytes []byte, imageType string, message []byte, key string) 
 		VisualDebug: state.debugMode,
 		Key:         lsbKey,
 	}
-	encodedImage := lsb.Encode(inputImage, message, options)
+	encodedImage := lsb.Encode(inputImage, appendSecretLengthToSecret(message), options)
 
 	encodedBytes, err := imageio.EncodeImage(&encodedImage, getResultImageType(imageType))
 
@@ -160,9 +168,13 @@ func DecodeLSB(imageBytes []byte, imageType string, key string) string {
 		VisualDebug: state.debugMode,
 		Key:         lsbKey,
 	}
-	result := lsb.Decode(inputImage, options)
 
-	return result
+	secretLengthString := lsb.Decode(inputImage, options, 4)
+	secretLength := binary.LittleEndian.Uint32(secretLengthString)
+
+	result := lsb.Decode(inputImage, options, int(4+secretLength))
+
+	return string(result[4:])
 }
 
 func EncodeBPCS(imageBytes []byte, imageType string, message []byte) []byte {
@@ -177,7 +189,8 @@ func EncodeBPCS(imageBytes []byte, imageType string, message []byte) []byte {
 	bounds := inputImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), inputImage, bounds.Min, draw.Src)
-	bpcs.EncodeBPCS(rgba, message)
+
+	bpcs.EncodeBPCS(rgba, appendSecretLengthToSecret(message))
 
 	encodedBytes, err := imageio.EncodeImage(rgba, getResultImageType(imageType))
 
@@ -199,7 +212,11 @@ func DecodeBPCS(imageBytes []byte, imageType string) string {
 	bounds := inputImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), inputImage, bounds.Min, draw.Src)
-	result := bpcs.DecodeBPCS(rgba, 100)
+	
+	secretLengthString := bpcs.DecodeBPCS(rgba, 4)
+	secretLength := binary.LittleEndian.Uint32(secretLengthString)
 
-	return string(result)
+	result := bpcs.DecodeBPCS(rgba, int(4+secretLength))
+
+	return string(result[4:])
 }

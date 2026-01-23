@@ -184,7 +184,7 @@ func Encode(containerImage image.Image, message []byte, options Options) image.R
 	return *rgba
 }
 
-func Decode(encodedImage image.Image, options Options) string {
+func Decode(encodedImage image.Image, options Options, length int) []byte {
 	bounds := encodedImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), encodedImage, bounds.Min, draw.Src)
@@ -245,7 +245,7 @@ func Decode(encodedImage image.Image, options Options) string {
 			for range key.ChannelsPerPixel {
 
 				currentChannel := key.Channels[channelCounter]
-		
+
 				fmt.Println("Current channel", currentChannel)
 
 				if currentChannel == "R" {
@@ -281,10 +281,12 @@ func Decode(encodedImage image.Image, options Options) string {
 			if y+key.GapY >= endY && x >= endX {
 				break
 			}
+
+			if len(data) >= length {
+				return data
+			}
 		}
 	}
 
-	fmt.Println(data)
-
-	return string(data)
+	return data
 }
