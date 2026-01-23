@@ -14,7 +14,7 @@
 	</head>
 	<body>
 		<div class="layout">
-			<div class="layout--block layout--block_center">
+			<div class="layout--block layout--block_main layout--block_center">
 				<div
 					class="menu"
 					id="menu"
@@ -220,16 +220,14 @@
 				</div>
 			</div>
 
-			<div class="layout--block">
+			<div class="layout--block layout--block_secondary">
 				<div class="images">
-					<div class="block">
+					<div class="block block_images">
 						<h2 class="block--title">Original image</h2>
 						<img
 							src="https://upload.wikimedia.org/wikipedia/commons/8/8c/Transparent.png"
 							class="image-preview"
 							id="original-preview"
-							width="200"
-							height="200"
 						/>
 						<input
 							type="file"
@@ -239,18 +237,16 @@
 						/>
 					</div>
 
-					<div class="swap-button">
+					<div class="swap-button ">
 						<button id="swap">SWAP</button>
 					</div>
 
-					<div class="block">
+					<div class="block block_images">
 						<h2 class="block--title">Result image</h2>
 						<img
 							src="https://upload.wikimedia.org/wikipedia/commons/8/8c/Transparent.png"
 							class="image-preview"
 							id="result-preview"
-							width="200"
-							height="200"
 						/>
 					</div>
 				</div>
