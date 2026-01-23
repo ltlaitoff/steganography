@@ -47,11 +47,9 @@ interface Config {
 			base: ElementInfo<HTMLDivElement>
 			methods: ElementInfo<HTMLDivElement>
 		}
-		LSB: {
-			baseBlock: ElementInfo<HTMLDivElement>
-			encodeBlock: ElementInfo<HTMLDivElement>
-			decodeBlock: ElementInfo<HTMLDivElement>
-		}
+		lsbBlock: ElementInfo<HTMLDivElement>
+		encodeBlock: ElementInfo<HTMLDivElement>
+		decodeBlock: ElementInfo<HTMLDivElement>
 		swapButton: ElementInfo<HTMLButtonElement>
 	}
 
@@ -104,8 +102,8 @@ interface State {
 	secretAsFile: boolean
 	secretMessage: string
 
-		encodeSecretFile: File | undefined
-		decodedSecretFile: File | undefined
+	encodeSecretFile: File | undefined
+	decodedSecretFile: File | undefined
 
 	LSB: {
 		key: LSBKey

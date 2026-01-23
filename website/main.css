@@ -311,7 +311,6 @@ input[type='number'] {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	justify-content: center;
 }
 
 /*
@@ -353,9 +352,10 @@ input[type='number'] {
 	background: var(--color-pink-400);
 }
 
-.lsb {
+.content {
 	padding: 1rem;
 	max-width: 500px;
+	width: 100%;
 }
 
 .block {
