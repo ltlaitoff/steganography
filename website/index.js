@@ -1,3 +1,5 @@
+Object.typedKeys = Object.keys
+
 /**
  * @type {Record<UIVariants, string>}
  */
@@ -12,27 +14,27 @@ const UIVariants = Object.freeze({
  * @type LSBKeyParams[]
  */
 const LSB_KEY_PARAMS = [
-	'startX',
-	'startY',
-	'endX',
-	'endY',
-	'gapX',
-	'gapY',
-	'channelsPerPixel',
-	'channels'
+	'StartX',
+	'StartY',
+	'EndX',
+	'EndY',
+	'GapX',
+	'GapY',
+	'ChannelsPerPixel',
+	'Channels'
 ]
 /**
  * @type Record<LSBKeyParams, string>
  */
 const LSB_KEY_PARSING_SCHEMA = {
-	startX: 'S',
-	startY: 'T',
-	endX: 'E',
-	endY: 'N',
-	gapX: 'H',
-	gapY: 'V',
-	channelsPerPixel: 'P',
-	channels: 'C'
+	StartX: 'S',
+	StartY: 'T',
+	EndX: 'E',
+	EndY: 'N',
+	GapX: 'H',
+	GapY: 'V',
+	ChannelsPerPixel: 'P',
+	Channels: 'C'
 }
 
 /**
@@ -94,9 +96,8 @@ const config = {
 		},
 		LSB: {
 			keyInputBlock: { id: "lsb-secret-key-block", type: HTMLDivElement },
-			keyOutput: { id: 'lsb-secret-key-output', type: HTMLInputElement },
+			keyInputOutput: { id: 'lsb-secret-key', type: HTMLInputElement },
 		},
-
 	}
 }
 
@@ -120,7 +121,7 @@ const UI = {
 	ERROR: {
 		block: loadElement(config.UIids.ERROR.block),
 		message: loadElement(config.UIids.ERROR.message),
-		button: loadElement(config.UIids.ERROR.button),
+		button: loadElement(config.UIids.ERROR.button)
 	}
 }
 
@@ -141,7 +142,7 @@ const SHARED = {
 // prettier-ignore
 const LSB = {
 	keyInputBlock: loadElement(config.ids.LSB.keyInputBlock),
-	keyOutput: loadElement(config.ids.LSB.keyOutput),
+	keyInputOutput: loadElement(config.ids.LSB.keyInputOutput),
 }
 
 const DEBUG = loadElement(config.ids.DEBUG)
@@ -163,29 +164,29 @@ const state = {
 
 	LSB: {
 		key: {
-			startX: 0,
-			startY: 0,
-			endX: 0,
-			endY: 0,
-			gapX: 0,
-			gapY: 0,
-			channelsPerPixel: 3,
-			channels: ['R', 'G', 'B']
+			StartX: 0,
+			StartY: 0,
+			EndX: 0,
+			EndY: 0,
+			GapX: 0,
+			GapY: 0,
+			ChannelsPerPixel: 3,
+			Channels: ['R', 'G', 'B']
 		}
 	},
 
-	errorMessage: ""
+	errorMessage: ''
 }
 
 // --
 
-UI.ERROR.button.addEventListener("click", e => {
+UI.ERROR.button.addEventListener('click', e => {
 	assert(
 		e.target instanceof config.UIids.ERROR.button.type,
 		'Event target on close error button should be equal to config type!'
 	)
 
-	state.errorMessage = ""
+	state.errorMessage = ''
 	render()
 })
 
@@ -194,13 +195,47 @@ LSB.keyInputBlock.addEventListener('change', e => {
 		e.target instanceof HTMLInputElement,
 		'Key input block change should be called only on input element!'
 	)
+
+	if (e.target.name == 'key') {
+		if (e.target.value == '') return
+
+		let result
+
+		try {
+			result = goParseLSBKey(e.target.value)
+		} catch (err) {
+			errorHandler(err)
+			return
+		}
+
+		assert(
+			result !== undefined,
+			'Golang function result should be always defined'
+		)
+
+		if (result.ok == false) {
+			showError(`Error! ${result.message}`)
+			return
+		}
+
+		const parsedKey = result.data
+		console.log(parsedKey)
+		state.LSB.key = parsedKey
+
+		render()
+		return
+	}
+
 	assert(
 		LSB_KEY_PARAMS.includes(e.target.name),
 		'Key input block input name should be one of LSB key params'
 	)
-	if (e.target.name === 'channels') {
+
+	if (e.target.name === 'Channels') {
 		const value = e.target.value.split('')
 		state.LSB.key[e.target.name] = value
+
+		render()
 		return
 	}
 
@@ -208,6 +243,7 @@ LSB.keyInputBlock.addEventListener('change', e => {
 	assert(Number.isNaN(value) === false, 'Input number value should not be NaN!')
 
 	state.LSB.key[e.target.name] = value
+	render()
 })
 
 SHARED.decode.secretFileOutputButton.addEventListener('click', e => {
@@ -520,7 +556,7 @@ async function submitBPCSDecode() {
 }
 
 GLOBAL.submitButton.addEventListener('click', () => {
-	state.errorMessage = ""
+	state.errorMessage = ''
 	render()
 
 	if (state.activeMethod == 'LSB') {
@@ -648,12 +684,32 @@ function render() {
 		SHARED.decode.secretFileOutputButton.disabled = true
 	}
 
-	if (state.errorMessage !== "") {
-		UI.ERROR.block.dataset['active'] = "true"
+	if (state.errorMessage !== '') {
+		UI.ERROR.block.dataset['active'] = 'true'
 		UI.ERROR.message.textContent = state.errorMessage
 	} else {
-		UI.ERROR.block.dataset['active'] = "false"
+		UI.ERROR.block.dataset['active'] = 'false'
 		UI.ERROR.message.textContent = state.errorMessage
+	}
+
+	LSB.keyInputOutput.value = generateLsbKey()
+	setLSBKeyFields()
+}
+
+function setLSBKeyFields() {
+	for (const key of LSB_KEY_PARAMS) {
+		const input = LSB.keyInputBlock.querySelector(`[name=${key}]`)
+		assert(
+			input instanceof HTMLInputElement,
+			`LSB key field with name ${key} should be HTMLInputElement`
+		)
+
+		if (key == 'Channels') {
+			input.value = state.LSB.key[key].join('')
+			continue
+		}
+
+		input.value = String(state.LSB.key[key])
 	}
 }
 
@@ -662,7 +718,7 @@ function generateLsbKey() {
 
 	for (const key of LSB_KEY_PARAMS) {
 		if (state.LSB.key[key] !== undefined) {
-			if (key !== 'channels') {
+			if (key !== 'Channels') {
 				result += LSB_KEY_PARSING_SCHEMA[key] + state.LSB.key[key]
 			} else {
 				result += state.LSB.key[key]
@@ -727,4 +783,11 @@ function assert(condition, message) {
 	if (!condition) {
 		throw new Error(message)
 	}
+}
+
+/**
+ * @type {IsRecord}
+ */
+function isRecord(value) {
+	return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

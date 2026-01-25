@@ -27,7 +27,7 @@ func SetDebugMode(debugMode bool) {
 	state.debugMode = debugMode
 }
 
-func parseLsbKey(key string) (*lsb.Key, error) {
+func ParseLsbKey(key string) (*lsb.Key, error) {
 	parsingSchema := map[rune]string{
 		'S': "StartX",
 		'T': "StartY",
@@ -135,7 +135,7 @@ func EncodeLSB(imageBytes []byte, imageType string, message []byte, key string) 
 		return nil, err
 	}
 
-	lsbKey, err := parseLsbKey(key)
+	lsbKey, err := ParseLsbKey(key)
 
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func DecodeLSB(imageBytes []byte, imageType string, key string) (string, error) 
 		return "", err
 	}
 
-	lsbKey, err := parseLsbKey(key)
+	lsbKey, err := ParseLsbKey(key)
 
 	if err != nil {
 		return "", err

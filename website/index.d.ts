@@ -52,8 +52,8 @@ interface Config {
 		decodeBlock: ElementInfo<HTMLDivElement>
 		swapButton: ElementInfo<HTMLButtonElement>
 		ERROR: {
-			block: ElementInfo<HTMLDivElement>,
-			message: ElementInfo<HTMLDivElement>,
+			block: ElementInfo<HTMLDivElement>
+			message: ElementInfo<HTMLDivElement>
 			button: ElementInfo<HTMLButtonElement>
 		}
 	}
@@ -65,7 +65,7 @@ interface Config {
 		}
 		LSB: {
 			keyInputBlock: ElementInfo<HTMLDivElement>
-			keyOutput: ElementInfo<HTMLInputElement>
+			keyInputOutput: ElementInfo<HTMLInputElement>
 		}
 		ENCODE: {
 			secretMessageInput: ElementInfo<HTMLInputElement>
@@ -74,7 +74,7 @@ interface Config {
 		DECODE: {
 			secretMessageOutput: ElementInfo<HTMLInputElement>
 			secretFileOutputButton: ElementInfo<HTMLButtonElement>
-		},
+		}
 	}
 	// 	// 	message: "message",
 	// }
@@ -83,14 +83,14 @@ interface Config {
 }
 
 interface LSBKey {
-	startX?: number
-	startY?: number
-	endX?: number
-	endY?: number
-	gapX?: number
-	gapY?: number
-	channelsPerPixel?: number
-	channels?: string[]
+	StartX: number
+	StartY: number
+	EndX: number
+	EndY: number
+	GapX: number
+	GapY: number
+	ChannelsPerPixel: number
+	Channels: string[]
 }
 
 type LSBKeyParams = keyof LSBKey
@@ -131,6 +131,8 @@ type FileToByteArray = (file: File) => Promise<Uint8Array>
 type ErrorHandler = (err: unknown) => void
 type ShowError = (message: string) => void
 
+type IsRecord = (value: unknown) => value is Record<string, unknown>
+
 /**
  * Functions from WASM Golang
  */
@@ -155,7 +157,17 @@ declare function goEncodeBPCS(image: Uint8Array, imageType: string, secretMessag
 declare function goDecodeBPCS(image: Uint8Array, imageType: string): GolangError | GolangOk<Uint8Array>
 //prettier-ignore
 declare function goDebug(debugMode: boolean): void
+//prettier-ignore
+declare function goParseLSBKey(key: string): GolangError | GolangOk<LSBKey>
 
 interface Array<T> {
 	includes(searchElement: any, fromIndex?: number): searchElement is T
+}
+
+interface ObjectConstructor {
+	typedKeys<T>(obj: T): Array<keyof T>
+}
+
+interface JSON {
+	parse(text: string, reviver?: (this: any, key: string, value: any) => any): unknown;
 }

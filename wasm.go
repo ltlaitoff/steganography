@@ -90,11 +90,45 @@ func debug(this js.Value, args []js.Value) interface{} {
 	return nil
 }
 
+func parseLSBKey(this js.Value, args []js.Value) interface{} {
+	key := args[0].String()
+
+	result, err := stego.ParseLsbKey(key)
+
+	fmt.Println("Parsed!", result)
+
+	if err != nil {
+		return JsError(err.Error())
+	}
+
+	// Cast for js.ValueOf
+	channels := make([]any, len(result.Channels))
+	for i := range channels {
+		channels[i] = result.Channels[i]
+	}
+
+	return js.ValueOf(map[string]any{
+		"ok": true,
+		"data": map[string]any{
+			"StartX":           result.StartX,
+			"StartY":           result.StartY,
+			"EndX":             result.EndX,
+			"EndY":             result.EndY,
+			"GapX":             result.GapX,
+			"GapY":             result.GapY,
+			"ChannelsPerPixel": result.ChannelsPerPixel,
+			"Channels":         js.ValueOf(channels),
+		},
+	})
+}
+
 func main() {
 	c := make(chan bool)
 
 	js.Global().Set("goEncodeLSB", js.FuncOf(encodeLsbWrapper))
 	js.Global().Set("goDecodeLSB", js.FuncOf(decodeLsbWrapper))
+	js.Global().Set("goParseLSBKey", js.FuncOf(parseLSBKey))
+
 	js.Global().Set("goEncodeBPCS", js.FuncOf(encodeBpcsWrapper))
 	js.Global().Set("goDecodeBPCS", js.FuncOf(decodeBpcsWrapper))
 
