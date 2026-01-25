@@ -45,6 +45,10 @@ const config = {
 
 	globalIds: {
 		originalImageInput: { id: 'original-input', type: HTMLInputElement },
+		originalImageInputDropZone: {
+			id: 'original-input-drop-zone',
+			type: HTMLLabelElement
+		},
 		originalImagePreview: { id: 'original-preview', type: HTMLImageElement },
 		resultImagePreview: { id: 'result-preview', type: HTMLImageElement },
 		submitButton: { id: 'submit-button', type: HTMLButtonElement }
@@ -104,6 +108,7 @@ const config = {
 // prettier-ignore
 const GLOBAL = {
 	originalImagePreview: loadElement(config.globalIds.originalImagePreview),
+	originalImageInputDropZone: loadElement(config.globalIds.originalImageInputDropZone),
 	resultImagePreview: loadElement(config.globalIds.resultImagePreview),
 	submitButton: loadElement(config.globalIds.submitButton),
 	originalImageInput: loadElement(config.globalIds.originalImageInput),
@@ -179,6 +184,66 @@ const state = {
 }
 
 // --
+
+window.addEventListener('drop', e => {
+	if (
+		e.dataTransfer &&
+		Array.from(e.dataTransfer.items).some(item => item.kind === 'file')
+	) {
+		e.preventDefault()
+	}
+})
+
+window.addEventListener('dragover', e => {
+	if (!e.target) return
+
+	const fileItems =
+		e.dataTransfer &&
+		Array.from(e.dataTransfer.items).filter(item => item.kind === 'file')
+
+	if (fileItems && fileItems.length > 0) {
+		e.preventDefault()
+
+		assert(e.target instanceof Node, 'e.target should be Node')
+
+		if (!GLOBAL.originalImageInputDropZone.contains(e.target)) {
+			e.dataTransfer.dropEffect = 'none'
+		}
+	}
+})
+
+GLOBAL.originalImageInputDropZone.addEventListener('dragover', e => {
+	const fileItems =
+		e.dataTransfer &&
+		Array.from(e.dataTransfer.items).filter(item => item.kind === 'file')
+
+	if (fileItems && fileItems.length > 0) {
+		e.preventDefault()
+
+		if (fileItems.some(item => item.type.startsWith('image/'))) {
+			e.dataTransfer.dropEffect = 'copy'
+		} else {
+			e.dataTransfer.dropEffect = 'none'
+		}
+	}
+})
+
+GLOBAL.originalImageInputDropZone.addEventListener("drop", e => {
+	e.preventDefault();
+
+	const files = e.dataTransfer && Array.from(e.dataTransfer.items)
+		.map((item) => item.getAsFile())
+		.filter((file) => file);
+
+	const firstFile = files?.[0]
+
+	if (!firstFile) {
+		showError('No file selected. Please choose a file.')
+	}
+
+	state.originalImageFile = firstFile
+	render()
+});
 
 UI.ERROR.button.addEventListener('click', e => {
 	assert(
@@ -278,7 +343,7 @@ SHARED.encode.secretFileInput.addEventListener('change', e => {
 
 	const file = e.target.files[0]
 	if (!file) {
-		throw new Error('No file selected. Please choose a file.')
+		showError('No file selected. Please choose a file.')
 	}
 
 	state.encodeSecretFile = file
@@ -330,23 +395,11 @@ GLOBAL.originalImageInput.addEventListener('change', e => {
 
 	const file = e.target.files[0]
 	if (!file) {
-		throw new Error('No file selected. Please choose a file.')
+		showError('No file selected. Please choose a file.')
 	}
 
 	state.originalImageFile = file
 	render()
-
-	// const reader = new FileReader()
-	//
-	// reader.onload = function() {
-	// 	assert(this.result !== null, "")
-	// }
-	//
-	// reader.onerror = () => {
-	// 	throw new Error('Error reading the file. Please try again.')
-	// }
-	//
-	// reader.readAsArrayBuffer(file)
 })
 
 SHARED.encode.secretMessageInput.addEventListener('change', e => {
@@ -365,14 +418,14 @@ SHARED.encode.secretMessageInput.addEventListener('change', e => {
 async function prepareSecretMessage() {
 	if (state.secretAsFile === true) {
 		if (state.encodeSecretFile === undefined) {
-			throw new Error('Secret file should exists to run LSB encoding')
+			showError('Secret file should exists to run LSB encoding')
 		}
 
 		return await fileToByteArray(state.encodeSecretFile)
 	}
 
 	if (state.secretMessage === '') {
-		throw new Error('Secret message is empty!')
+		showError('Secret message is empty!')
 	}
 
 	return new TextEncoder().encode(state.secretMessage)
@@ -380,7 +433,7 @@ async function prepareSecretMessage() {
 
 async function submitLSBEncode() {
 	if (state.originalImageFile === undefined) {
-		throw new Error('Image is not loaded!')
+		showError('Image is not loaded!')
 	}
 
 	const message = await prepareSecretMessage()
@@ -428,7 +481,7 @@ async function submitLSBEncode() {
 
 async function submitLSBDecode() {
 	if (state.originalImageFile === undefined) {
-		throw new Error('Image is not loaded!')
+		showError('Image is not loaded!')
 	}
 
 	const originalImage = await fileToByteArray(state.originalImageFile)
@@ -473,7 +526,7 @@ async function submitLSBDecode() {
 
 async function submitBPCSEncode() {
 	if (state.originalImageFile === undefined) {
-		throw new Error('Image is not loaded!')
+		showError('Image is not loaded!')
 	}
 
 	const message = await prepareSecretMessage()
@@ -514,7 +567,7 @@ async function submitBPCSEncode() {
 
 async function submitBPCSDecode() {
 	if (state.originalImageFile === undefined) {
-		throw new Error('Image is not loaded!')
+		showError('Image is not loaded!')
 	}
 
 	const originalImage = await fileToByteArray(state.originalImageFile)
@@ -658,6 +711,11 @@ function render() {
 		GLOBAL.originalImagePreview.src = URL.createObjectURL(
 			state.originalImageFile
 		)
+		GLOBAL.originalImagePreview.classList.remove("hidden")
+		GLOBAL.originalImageInputDropZone.classList.add("hidden")
+	} else {
+		GLOBAL.originalImagePreview.classList.add("hidden")
+		GLOBAL.originalImageInputDropZone.classList.remove("hidden")
 	}
 
 	if (state.resultImageFile) {
@@ -781,7 +839,7 @@ function loadElement(elementInfo) {
  */
 function assert(condition, message) {
 	if (!condition) {
-		throw new Error(message)
+		showError("[ASSERTION]: " + message)
 	}
 }
 

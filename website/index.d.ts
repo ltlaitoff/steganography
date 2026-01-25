@@ -26,6 +26,7 @@ interface Config {
 
 	globalIds: {
 		originalImageInput: ElementInfo<HTMLInputElement>
+		originalImageInputDropZone: ElementInfo<HTMLLabelElement>
 		originalImagePreview: ElementInfo<HTMLImageElement>
 		resultImagePreview: ElementInfo<HTMLImageElement>
 		submitButton: ElementInfo<HTMLButtonElement>
