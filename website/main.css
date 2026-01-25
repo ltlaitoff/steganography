@@ -332,7 +332,8 @@ input[type='number'] {
 }
 
 .menu .menu-block .menu-block--element {
-	padding: 0.25rem;
+	padding: 0.5rem;
+	border-radius: 0.25rem;
 	background: var(--color-slate-200);
 }
 
@@ -405,6 +406,28 @@ input[type='number'] {
 
 .swap-button {
 	align-self: center;
+
+	width: 100%;
+	height: 100%;
+	max-width: 2.5rem;
+	max-height: 2.5rem;
+	aspect-ratio: 1;
+
+	border: none;
+	background: var(--color-slate-200);
+	border-radius: 0.5rem;
+	padding: 0.5rem;
+
+	color: var(--color-slate-800);
+}
+
+.swap-button:hover {
+	color: var(--color-violet-500);
+	background: var(--color-slate-100);
+}
+
+.swap-button--icon {
+	pointer-events: none;
 }
 
 button:hover {
