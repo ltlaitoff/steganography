@@ -22,3 +22,7 @@ go.work.sum
 *.wasm
 
 /.idea
+
+node_modules
+
+*.tsbuildinfo

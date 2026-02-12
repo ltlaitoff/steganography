@@ -20,7 +20,8 @@
 	"types": "./index.d.ts",
 	"scripts": {
 		"test": "test",
-		"format": "pnpm prettier --write ."
+		"format": "pnpm prettier --write .",
+		"typecheck": "pnpm tsc --noEmit --project tsconfig.json"
 	},
 	"devDependencies": {
 		"prettier": "^3.8.1",
