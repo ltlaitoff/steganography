@@ -32,11 +32,7 @@
 		"suppressExcessPropertyErrors": false,
 		"suppressImplicitAnyIndexErrors": false,
 		"noStrictGenericChecks": false,
-		"lib": [
-			"dom",
-			"dom.iterable",
-			"esnext"
-		],
+		"lib": ["dom", "dom.iterable", "esnext"],
 		"allowJs": true,
 		"checkJs": true,
 		"skipLibCheck": true,
@@ -50,8 +46,5 @@
 		"jsx": "preserve",
 		"incremental": true
 	},
-	"includes": [
-		"*.d.ts",
-		"*.js"
-	]
+	"includes": ["*.d.ts", "*.js"]
 }
