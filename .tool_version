@@ -1,2 +1,5 @@
 golang 1.24.11
 tinygo 0.37.0
+
+nodejs v22.14.0
+pnpm 10.7.1

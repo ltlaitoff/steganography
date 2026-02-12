@@ -1,0 +1,29 @@
+{
+	"name": "steganography",
+	"version": "1.0.0",
+	"description": "TODO",
+	"private": "true",
+	"keywords": [
+		"steganography"
+	],
+	"homepage": "https://github.com/ltlaitoff/steganography#readme",
+	"bugs": {
+		"url": "https://github.com/ltlaitoff/steganography/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+ssh://git@github.com/ltlaitoff/steganography.git"
+	},
+	"license": "ISC",
+	"author": "Ivan Shchedrovskyi",
+	"main": "index.js",
+	"types": "./index.d.ts",
+	"scripts": {
+		"test": "test",
+		"format": "pnpm prettier --write ."
+	},
+	"devDependencies": {
+		"prettier": "^3.8.1",
+		"typescript": "^5.9.3"
+	}
+}
