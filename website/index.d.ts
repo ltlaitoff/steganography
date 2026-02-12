@@ -69,12 +69,16 @@ interface Config {
 			keyInputOutput: ElementInfo<HTMLInputElement>
 		}
 		ENCODE: {
+			secretMessageInputBlock: ElementInfo<HTMLLabelElement>
+			secretFileInputBlock: ElementInfo<HTMLLabelElement>
 			secretMessageInput: ElementInfo<HTMLInputElement>
 			secretFileInput: ElementInfo<HTMLInputElement>
 		}
 		DECODE: {
 			secretMessageOutput: ElementInfo<HTMLInputElement>
 			secretFileOutputButton: ElementInfo<HTMLButtonElement>
+			secretMessageOutputBlock: ElementInfo<HTMLLabelElement>
+			secretFileOutputButtonBlock: ElementInfo<HTMLDivElement>
 		}
 	}
 	// 	// 	message: "message",
@@ -170,5 +174,8 @@ interface ObjectConstructor {
 }
 
 interface JSON {
-	parse(text: string, reviver?: (this: any, key: string, value: any) => any): unknown;
+	parse(
+		text: string,
+		reviver?: (this: any, key: string, value: any) => any
+	): unknown
 }

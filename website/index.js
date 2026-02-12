@@ -92,9 +92,13 @@ const config = {
 		},
 		ENCODE: {
 			secretMessageInput: { id: 'encode-secret-message-input', type: HTMLInputElement },
-			secretFileInput: { id: 'encode-secret-file-input', type: HTMLInputElement }
+			secretFileInput: { id: 'encode-secret-file-input', type: HTMLInputElement },
+			secretMessageInputBlock: { id: 'encode-secret-message-input-block', type: HTMLLabelElement },
+			secretFileInputBlock: { id: 'encode-secret-file-input-block', type: HTMLLabelElement },
 		},
 		DECODE: {
+			secretMessageOutputBlock: { id: 'decode-secret-message-output-block', type: HTMLLabelElement },
+			secretFileOutputButtonBlock: { id: 'decode-secret-file-output-button-block', type: HTMLDivElement },
 			secretMessageOutput: { id: 'decode-secret-message-output', type: HTMLInputElement },
 			secretFileOutputButton: { id: 'decode-secret-file-output-button', type: HTMLButtonElement }
 		},
@@ -134,12 +138,22 @@ const SHARED = {
 	secretAsFileCheckbox: loadElement(config.ids.SHARED.secretAsFileCheckbox),
 	encode: {
 		secretMessageInput: loadElement(config.ids.ENCODE.secretMessageInput),
-		secretFileInput: loadElement(config.ids.ENCODE.secretFileInput)
+		secretFileInput: loadElement(config.ids.ENCODE.secretFileInput),
+		secretMessageInputBlock: loadElement(
+			config.ids.ENCODE.secretMessageInputBlock
+		),
+		secretFileInputBlock: loadElement(config.ids.ENCODE.secretFileInputBlock)
 	},
 	decode: {
 		secretMessageOutput: loadElement(config.ids.DECODE.secretMessageOutput),
 		secretFileOutputButton: loadElement(
 			config.ids.DECODE.secretFileOutputButton
+		),
+		secretMessageOutputBlock: loadElement(
+			config.ids.DECODE.secretMessageOutputBlock
+		),
+		secretFileOutputButtonBlock: loadElement(
+			config.ids.DECODE.secretFileOutputButtonBlock
 		)
 	}
 }
@@ -228,12 +242,14 @@ GLOBAL.originalImageInputDropZone.addEventListener('dragover', e => {
 	}
 })
 
-GLOBAL.originalImageInputDropZone.addEventListener("drop", e => {
-	e.preventDefault();
+GLOBAL.originalImageInputDropZone.addEventListener('drop', e => {
+	e.preventDefault()
 
-	const files = e.dataTransfer && Array.from(e.dataTransfer.items)
-		.map((item) => item.getAsFile())
-		.filter((file) => file);
+	const files =
+		e.dataTransfer &&
+		Array.from(e.dataTransfer.items)
+			.map(item => item.getAsFile())
+			.filter(file => file)
 
 	const firstFile = files?.[0]
 
@@ -243,7 +259,7 @@ GLOBAL.originalImageInputDropZone.addEventListener("drop", e => {
 
 	state.originalImageFile = firstFile
 	render()
-});
+})
 
 UI.ERROR.button.addEventListener('click', e => {
 	assert(
@@ -641,13 +657,13 @@ UI.menu.base.addEventListener('change', e => {
 
 	assert(
 		e.target.name == config.menu.name.methods ||
-		e.target.name == config.menu.name.operation,
+			e.target.name == config.menu.name.operation,
 		'Menu input name should be one of menu names'
 	)
 
 	assert(
 		config.menu.value.methods.includes(e.target.value) ||
-		config.menu.value.operation.includes(e.target.value),
+			config.menu.value.operation.includes(e.target.value),
 		'Menu input value should be one from menu config'
 	)
 
@@ -687,6 +703,7 @@ async function main() {
 		fetch(config.wasmUrl),
 		go.importObject
 	)
+
 	go.run(wasmModule.instance)
 }
 
@@ -711,11 +728,11 @@ function render() {
 		GLOBAL.originalImagePreview.src = URL.createObjectURL(
 			state.originalImageFile
 		)
-		GLOBAL.originalImagePreview.classList.remove("hidden")
-		GLOBAL.originalImageInputDropZone.classList.add("hidden")
+		GLOBAL.originalImagePreview.classList.remove('hidden')
+		GLOBAL.originalImageInputDropZone.classList.add('hidden')
 	} else {
-		GLOBAL.originalImagePreview.classList.add("hidden")
-		GLOBAL.originalImageInputDropZone.classList.remove("hidden")
+		GLOBAL.originalImagePreview.classList.add('hidden')
+		GLOBAL.originalImageInputDropZone.classList.remove('hidden')
 	}
 
 	if (state.resultImageFile) {
@@ -725,15 +742,15 @@ function render() {
 	SHARED.secretAsFileCheckbox.checked = state.secretAsFile
 
 	if (state.secretAsFile) {
-		SHARED.encode.secretMessageInput.classList.add('hidden')
-		SHARED.decode.secretMessageOutput.classList.add('hidden')
-		SHARED.encode.secretFileInput.classList.remove('hidden')
-		SHARED.decode.secretFileOutputButton.classList.remove('hidden')
+		SHARED.encode.secretMessageInputBlock.classList.add('hidden')
+		SHARED.decode.secretMessageOutputBlock.classList.add('hidden')
+		SHARED.encode.secretFileInputBlock.classList.remove('hidden')
+		SHARED.decode.secretFileOutputButtonBlock.classList.remove('hidden')
 	} else {
-		SHARED.encode.secretMessageInput.classList.remove('hidden')
-		SHARED.decode.secretMessageOutput.classList.remove('hidden')
-		SHARED.encode.secretFileInput.classList.add('hidden')
-		SHARED.decode.secretFileOutputButton.classList.add('hidden')
+		SHARED.encode.secretMessageInputBlock.classList.remove('hidden')
+		SHARED.decode.secretMessageOutputBlock.classList.remove('hidden')
+		SHARED.encode.secretFileInputBlock.classList.add('hidden')
+		SHARED.decode.secretFileOutputButtonBlock.classList.add('hidden')
 	}
 
 	if (state.decodedSecretFile) {
@@ -806,6 +823,7 @@ function errorHandler(err) {
  * @type {ShowError}
  */
 function showError(message) {
+	console.log(message)
 	state.errorMessage = message
 	render()
 }
@@ -839,7 +857,7 @@ function loadElement(elementInfo) {
  */
 function assert(condition, message) {
 	if (!condition) {
-		showError("[ASSERTION]: " + message)
+		showError('[ASSERTION]: ' + message)
 	}
 }
 

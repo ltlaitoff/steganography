@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
@@ -108,7 +108,10 @@
 						<h2 class="block--title block--title_primary">Encode</h2>
 
 						<div class="block--elements">
-							<label class="input-label">
+							<label
+								class="input-label"
+								id="encode-secret-message-input-block"
+							>
 								<div class="input-title">Secret message</div>
 								<input
 									id="encode-secret-message-input"
@@ -116,7 +119,10 @@
 								/>
 							</label>
 
-							<label class="input-label">
+							<label
+								class="input-label"
+								id="encode-secret-file-input-block"
+							>
 								<h2 class="input-title">Secret file</h2>
 								<input
 									type="file"
@@ -132,7 +138,10 @@
 					>
 						<h2 class="block--title block--title_secondary">Decode</h2>
 
-						<label class="input-label">
+						<label
+							class="input-label"
+							id="decode-secret-message-output-block"
+						>
 							<h2 class="input-title">Decoded message</h2>
 							<input
 								type="text"
@@ -140,9 +149,14 @@
 							/>
 						</label>
 
-						<button id="decode-secret-file-output-button">
-							Download secret file
-						</button>
+						<div id="decode-secret-file-output-button-block">
+							<button
+								class="button"
+								id="decode-secret-file-output-button"
+							>
+								Download secret file
+							</button>
+						</div>
 					</div>
 
 					<div id="lsb">
