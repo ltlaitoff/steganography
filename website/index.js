@@ -1,15 +1,3 @@
-Object.typedKeys = Object.keys
-
-/**
- * @type {Record<UIVariants, string>}
- */
-const UIVariants = Object.freeze({
-	LSB_ENCODE: 'LSB_ENCODE',
-	LSB_DECODE: 'LSB_DECODE',
-	BPCS_ENCODE: 'BPCS_ENCODE',
-	BPCS_DECODE: 'BPCS_DECODE'
-})
-
 /**
  * @type LSBKeyParams[]
  */
@@ -23,6 +11,7 @@ const LSB_KEY_PARAMS = [
 	'ChannelsPerPixel',
 	'Channels'
 ]
+
 /**
  * @type Record<LSBKeyParams, string>
  */
@@ -255,6 +244,7 @@ GLOBAL.originalImageInputDropZone.addEventListener('drop', e => {
 
 	if (!firstFile) {
 		showError('No file selected. Please choose a file.')
+		return
 	}
 
 	state.originalImageFile = firstFile
@@ -358,8 +348,10 @@ SHARED.encode.secretFileInput.addEventListener('change', e => {
 	assert(e.target.files !== null, 'LSB secret file input should have files')
 
 	const file = e.target.files[0]
+
 	if (!file) {
 		showError('No file selected. Please choose a file.')
+		return
 	}
 
 	state.encodeSecretFile = file
@@ -410,8 +402,10 @@ GLOBAL.originalImageInput.addEventListener('change', e => {
 	assert(e.target.files !== null, 'Original image input should have files')
 
 	const file = e.target.files[0]
+
 	if (!file) {
 		showError('No file selected. Please choose a file.')
+		return
 	}
 
 	state.originalImageFile = file
@@ -435,6 +429,7 @@ async function prepareSecretMessage() {
 	if (state.secretAsFile === true) {
 		if (state.encodeSecretFile === undefined) {
 			showError('Secret file should exists to run LSB encoding')
+			return
 		}
 
 		return await fileToByteArray(state.encodeSecretFile)
@@ -442,32 +437,16 @@ async function prepareSecretMessage() {
 
 	if (state.secretMessage === '') {
 		showError('Secret message is empty!')
+		return
 	}
 
 	return new TextEncoder().encode(state.secretMessage)
 }
 
-async function submitLSBEncode() {
-	if (state.originalImageFile === undefined) {
-		showError('Image is not loaded!')
-	}
-
-	const message = await prepareSecretMessage()
-	const originalImage = await fileToByteArray(state.originalImageFile)
-
-	let result = undefined
-	try {
-		result = goEncodeLSB(
-			originalImage,
-			state.originalImageFile.type,
-			message,
-			generateLsbKey()
-		)
-	} catch (err) {
-		errorHandler(err)
-		return
-	}
-
+/**
+	* @type {CheckGoOutput}
+	*/
+function checkGoOutput(result) {
 	assert(
 		result !== undefined,
 		'Golang function result should be always defined'
@@ -478,176 +457,88 @@ async function submitLSBEncode() {
 		return
 	}
 
-	const content = result.data
-	console.log('JS result:', content, typeof content)
-
-	let resultImageType = state.originalImageFile.type
-
-	if (state.originalImageFile.type === 'image/jpeg') {
-		resultImageType = 'image/png'
-	}
-
-	const blob = new Blob([content], { type: resultImageType })
-	state.resultImageFile = new File([blob], `result.${blob.type}`, {
-		type: blob.type
-	})
-
-	render()
+	return result.data
 }
 
-async function submitLSBDecode() {
-	if (state.originalImageFile === undefined) {
-		showError('Image is not loaded!')
-	}
-
-	const originalImage = await fileToByteArray(state.originalImageFile)
-
-	let decodeImageType = state.originalImageFile.type
-
-	if (state.originalImageFile.type === 'image/jpeg') {
-		decodeImageType = 'image/png'
-	}
-
-	let result
-
-	try {
-		result = goDecodeLSB(originalImage, decodeImageType, generateLsbKey())
-	} catch (err) {
-		errorHandler(err)
-		return
-	}
-
-	assert(
-		result !== undefined,
-		'Golang function result should be always defined'
-	)
-
-	if (result.ok == false) {
-		showError(`Error! ${result.message}`)
-		return
-	}
-
-	const content = result.data
-
-	if (state.secretAsFile) {
-		state.decodedSecretFile = new File([content], `result`)
-	} else {
-		SHARED.decode.secretMessageOutput.value = content.toString()
-	}
-
-	console.log('Decoded message js:', content)
-
-	render()
-}
-
-async function submitBPCSEncode() {
-	if (state.originalImageFile === undefined) {
-		showError('Image is not loaded!')
-	}
-
-	const message = await prepareSecretMessage()
-	const originalImage = await fileToByteArray(state.originalImageFile)
-
-	let result
-	try {
-		result = goEncodeBPCS(originalImage, state.originalImageFile.type, message)
-	} catch (err) {
-		errorHandler(err)
-		return
-	}
-
-	assert(
-		result !== undefined,
-		'Golang function result should be always defined'
-	)
-
-	if (result.ok == false) {
-		showError(`Error! ${result.message}`)
-		return
-	}
-
-	const content = result.data
-
-	let resultImageType = state.originalImageFile.type
-	if (state.originalImageFile.type === 'image/jpeg') {
-		resultImageType = 'image/png'
-	}
-
-	const blob = new Blob([content], { type: resultImageType })
-	state.resultImageFile = new File([blob], `result.${blob.type}`, {
-		type: blob.type
-	})
-
-	render()
-}
-
-async function submitBPCSDecode() {
-	if (state.originalImageFile === undefined) {
-		showError('Image is not loaded!')
-	}
-
-	const originalImage = await fileToByteArray(state.originalImageFile)
-
-	let decodeImageType = state.originalImageFile.type
-	if (state.originalImageFile.type === 'image/jpeg') {
-		decodeImageType = 'image/png'
-	}
-
-	let result
-	try {
-		result = goDecodeBPCS(originalImage, decodeImageType)
-	} catch (err) {
-		errorHandler(err)
-		return
-	}
-
-	assert(
-		result !== undefined,
-		'Golang function result should be always defined'
-	)
-
-	if (result.ok == false) {
-		showError(`Error! ${result.message}`)
-		return
-	}
-
-	const content = result.data
-
-	if (state.secretAsFile) {
-		state.decodedSecretFile = new File([content], `result`)
-	} else {
-		SHARED.decode.secretMessageOutput.value = content.toString()
-	}
-
-	console.log('[JS] BPCS decoded message:', content)
-
-	render()
-}
-
-GLOBAL.submitButton.addEventListener('click', () => {
+async function submitHandler() {
 	state.errorMessage = ''
 	render()
 
-	if (state.activeMethod == 'LSB') {
-		if (state.activeOperation == 'ENCODE') {
-			submitLSBEncode()
+	if (state.originalImageFile === undefined) {
+		showError('Image is not loaded!')
+		return
+	}
+	const originalImage = await fileToByteArray(state.originalImageFile)
+	const imageType = state.originalImageFile.type
+
+	if (state.activeOperation == 'ENCODE') {
+		const message = await prepareSecretMessage()
+		assert(message !== undefined, "Prepared secret message should be defined!")
+
+		/**
+			* @type {Uint8Array<ArrayBuffer> | undefined}
+			*/
+		let content
+
+		if (state.activeMethod == 'LSB') {
+			content = checkGoOutput(goEncodeLSB(originalImage, imageType, message, generateLsbKey()))
+		} else if (state.activeMethod == 'BPCS') {
+			content = checkGoOutput(goEncodeBPCS(originalImage, imageType, message))
+		} else {
+			assert(false, "Active method not found!")
 		}
 
-		if (state.activeOperation == 'DECODE') {
-			submitLSBDecode()
+		if (content == undefined) {
+			throw new Error("TODO: Remove undefined from encode calls")
+		}
+
+		// TODO: Remove
+		let resultImageType = imageType
+		if (imageType === 'image/jpeg') {
+			resultImageType = 'image/png'
+		}
+
+		const blob = new Blob([content], { type: resultImageType })
+		state.resultImageFile = new File([blob], `result.${blob.type}`, {
+			type: blob.type
+		})
+	}
+
+	if (state.activeOperation == 'DECODE') {
+		let decodeImageType = imageType
+
+		if (imageType === 'image/jpeg') {
+			decodeImageType = 'image/png'
+		}
+
+		/**
+			* @type {Uint8Array<ArrayBuffer> | undefined}
+			*/
+		let content
+
+		if (state.activeMethod == 'LSB') {
+			content = checkGoOutput(goDecodeLSB(originalImage, decodeImageType, generateLsbKey()))
+		} else if (state.activeMethod == 'BPCS') {
+			content = checkGoOutput(goDecodeBPCS(originalImage, decodeImageType))
+		} else {
+			assert(false, "Active method not found!")
+		}
+
+		if (content == undefined) {
+			throw new Error("TODO: Remove undefined from encode calls")
+		}
+
+		if (state.secretAsFile) {
+			state.decodedSecretFile = new File([content], `result`)
+		} else {
+			SHARED.decode.secretMessageOutput.value = content.toString()
 		}
 	}
 
-	if (state.activeMethod == 'BPCS') {
-		if (state.activeOperation == 'ENCODE') {
-			submitBPCSEncode()
-		}
+	render()
+}
 
-		if (state.activeOperation == 'DECODE') {
-			submitBPCSDecode()
-		}
-	}
-})
+GLOBAL.submitButton.addEventListener('click', submitHandler)
 
 UI.menu.base.addEventListener('change', e => {
 	assert(
@@ -657,13 +548,13 @@ UI.menu.base.addEventListener('change', e => {
 
 	assert(
 		e.target.name == config.menu.name.methods ||
-			e.target.name == config.menu.name.operation,
+		e.target.name == config.menu.name.operation,
 		'Menu input name should be one of menu names'
 	)
 
 	assert(
 		config.menu.value.methods.includes(e.target.value) ||
-			config.menu.value.operation.includes(e.target.value),
+		config.menu.value.operation.includes(e.target.value),
 		'Menu input value should be one from menu config'
 	)
 

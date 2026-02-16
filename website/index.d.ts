@@ -1,8 +1,6 @@
 type Methods = 'LSB' | 'BPCS'
 type Operation = 'ENCODE' | 'DECODE'
 
-type UIVariants = `${Methods}_${Operation}`
-
 /*
  * LSB Encode:
  * Checkox type
@@ -138,6 +136,19 @@ type ShowError = (message: string) => void
 
 type IsRecord = (value: unknown) => value is Record<string, unknown>
 
+type Encode = (
+	originalImage: Uint8Array<ArrayBufferLike>,
+	imageType: string,
+	message: Uint8Array<ArrayBufferLike>,
+) => Promise<Uint8Array<ArrayBuffer> | undefined>
+
+type Decode = (
+	originalImage: Uint8Array<ArrayBufferLike>,
+	imageType: string,
+) => Promise<Uint8Array<ArrayBuffer> | undefined>
+
+type CheckGoOutput = <T>(content: GolangOk<T> | GolangError) => T | undefined
+
 /**
  * Functions from WASM Golang
  */
@@ -152,25 +163,38 @@ interface GolangOk<T> {
 	data: T
 }
 
-//prettier-ignore
-declare function goEncodeLSB(image: Uint8Array, imageType: string, secretMessage: Uint8Array, key: string): GolangError | GolangOk<Uint8Array>
-//prettier-ignore
-declare function goDecodeLSB(image: Uint8Array, imageType: string, key: string): GolangError | GolangOk<Uint8Array>
-//prettier-ignore
-declare function goEncodeBPCS(image: Uint8Array, imageType: string, secretMessage: Uint8Array): GolangError | GolangOk<Uint8Array>
-//prettier-ignore
-declare function goDecodeBPCS(image: Uint8Array, imageType: string): GolangError | GolangOk<Uint8Array>
-//prettier-ignore
+declare function goEncodeLSB(
+	image: Uint8Array,
+	imageType: string,
+	secretMessage: Uint8Array,
+	key: string
+): GolangError | GolangOk<Uint8Array<ArrayBuffer>>
+
+declare function goDecodeLSB(
+	image: Uint8Array,
+	imageType: string,
+	key: string
+): GolangError | GolangOk<Uint8Array<ArrayBuffer>>
+
+declare function goEncodeBPCS(
+	image: Uint8Array,
+	imageType: string,
+	secretMessage: Uint8Array
+): GolangError | GolangOk<Uint8Array<ArrayBuffer>>
+
+declare function goDecodeBPCS(
+	image: Uint8Array,
+	imageType: string
+): GolangError | GolangOk<Uint8Array<ArrayBuffer>>
+
 declare function goDebug(debugMode: boolean): void
-//prettier-ignore
+
 declare function goParseLSBKey(key: string): GolangError | GolangOk<LSBKey>
+
+/* Global */
 
 interface Array<T> {
 	includes(searchElement: any, fromIndex?: number): searchElement is T
-}
-
-interface ObjectConstructor {
-	typedKeys<T>(obj: T): Array<keyof T>
 }
 
 interface JSON {
