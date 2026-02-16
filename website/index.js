@@ -242,10 +242,10 @@ GLOBAL.originalImageInputDropZone.addEventListener('drop', e => {
 
 	const firstFile = files?.[0]
 
-	if (!firstFile) {
-		showError('No file selected. Please choose a file.')
-		return
-	}
+	userAssert(
+		firstFile !== undefined && firstFile !== null,
+		'No file selected. Please choose a file.'
+	)
 
 	state.originalImageFile = firstFile
 	render()
@@ -270,27 +270,7 @@ LSB.keyInputBlock.addEventListener('change', e => {
 	if (e.target.name == 'key') {
 		if (e.target.value == '') return
 
-		let result
-
-		try {
-			result = goParseLSBKey(e.target.value)
-		} catch (err) {
-			errorHandler(err)
-			return
-		}
-
-		assert(
-			result !== undefined,
-			'Golang function result should be always defined'
-		)
-
-		if (result.ok == false) {
-			showError(`Error! ${result.message}`)
-			return
-		}
-
-		const parsedKey = result.data
-		console.log(parsedKey)
+		const parsedKey = checkGoOutput(goParseLSBKey(e.target.value))
 		state.LSB.key = parsedKey
 
 		render()
@@ -348,11 +328,7 @@ SHARED.encode.secretFileInput.addEventListener('change', e => {
 	assert(e.target.files !== null, 'LSB secret file input should have files')
 
 	const file = e.target.files[0]
-
-	if (!file) {
-		showError('No file selected. Please choose a file.')
-		return
-	}
+	userAssert(file !== undefined, 'No file selected. Please choose a file.')
 
 	state.encodeSecretFile = file
 })
@@ -402,11 +378,7 @@ GLOBAL.originalImageInput.addEventListener('change', e => {
 	assert(e.target.files !== null, 'Original image input should have files')
 
 	const file = e.target.files[0]
-
-	if (!file) {
-		showError('No file selected. Please choose a file.')
-		return
-	}
+	userAssert(file !== undefined, 'No file selected. Please choose a file.')
 
 	state.originalImageFile = file
 	render()
@@ -427,25 +399,22 @@ SHARED.encode.secretMessageInput.addEventListener('change', e => {
 
 async function prepareSecretMessage() {
 	if (state.secretAsFile === true) {
-		if (state.encodeSecretFile === undefined) {
-			showError('Secret file should exists to run LSB encoding')
-			return
-		}
+		userAssert(
+			state.encodeSecretFile !== undefined,
+			'Secret file should exists to run LSB encoding'
+		)
 
 		return await fileToByteArray(state.encodeSecretFile)
 	}
 
-	if (state.secretMessage === '') {
-		showError('Secret message is empty!')
-		return
-	}
+	userAssert(state.secretMessage !== '', 'Secret message is empty!')
 
 	return new TextEncoder().encode(state.secretMessage)
 }
 
 /**
-	* @type {CheckGoOutput}
-	*/
+ * @type {CheckGoOutput}
+ */
 function checkGoOutput(result) {
 	assert(
 		result !== undefined,
@@ -453,8 +422,7 @@ function checkGoOutput(result) {
 	)
 
 	if (result.ok == false) {
-		showError(`Error! ${result.message}`)
-		return
+		throw new UserError(`Error! ${result.message}`)
 	}
 
 	return result.data
@@ -464,32 +432,28 @@ async function submitHandler() {
 	state.errorMessage = ''
 	render()
 
-	if (state.originalImageFile === undefined) {
-		showError('Image is not loaded!')
-		return
-	}
+	userAssert(state.originalImageFile !== undefined, 'Image is not loaded!')
+
 	const originalImage = await fileToByteArray(state.originalImageFile)
 	const imageType = state.originalImageFile.type
 
 	if (state.activeOperation == 'ENCODE') {
 		const message = await prepareSecretMessage()
-		assert(message !== undefined, "Prepared secret message should be defined!")
+		assert(message !== undefined, 'Prepared secret message should be defined!')
 
 		/**
-			* @type {Uint8Array<ArrayBuffer> | undefined}
-			*/
+		 * @type {Uint8Array<ArrayBuffer>}
+		 */
 		let content
 
 		if (state.activeMethod == 'LSB') {
-			content = checkGoOutput(goEncodeLSB(originalImage, imageType, message, generateLsbKey()))
+			content = checkGoOutput(
+				goEncodeLSB(originalImage, imageType, message, generateLsbKey())
+			)
 		} else if (state.activeMethod == 'BPCS') {
 			content = checkGoOutput(goEncodeBPCS(originalImage, imageType, message))
 		} else {
-			assert(false, "Active method not found!")
-		}
-
-		if (content == undefined) {
-			throw new Error("TODO: Remove undefined from encode calls")
+			assert(false, 'Active method not found!')
 		}
 
 		// TODO: Remove
@@ -512,20 +476,18 @@ async function submitHandler() {
 		}
 
 		/**
-			* @type {Uint8Array<ArrayBuffer> | undefined}
-			*/
+		 * @type {Uint8Array<ArrayBuffer>}
+		 */
 		let content
 
 		if (state.activeMethod == 'LSB') {
-			content = checkGoOutput(goDecodeLSB(originalImage, decodeImageType, generateLsbKey()))
+			content = checkGoOutput(
+				goDecodeLSB(originalImage, decodeImageType, generateLsbKey())
+			)
 		} else if (state.activeMethod == 'BPCS') {
 			content = checkGoOutput(goDecodeBPCS(originalImage, decodeImageType))
 		} else {
-			assert(false, "Active method not found!")
-		}
-
-		if (content == undefined) {
-			throw new Error("TODO: Remove undefined from encode calls")
+			assert(false, 'Active method not found!')
 		}
 
 		if (state.secretAsFile) {
@@ -698,28 +660,6 @@ function generateLsbKey() {
 }
 
 /**
- * @type {ErrorHandler}
- */
-function errorHandler(err) {
-	if (err instanceof WebAssembly.RuntimeError) {
-		showError('Catch WebAssembly.RuntimeError! Check console for more details!')
-		return
-	}
-
-	console.log('Error', err)
-	showError('Catch unknown error! Check console for more details!')
-}
-
-/**
- * @type {ShowError}
- */
-function showError(message) {
-	console.log(message)
-	state.errorMessage = message
-	render()
-}
-
-/**
  * @type {FileToByteArray}
  */
 async function fileToByteArray(file) {
@@ -744,17 +684,101 @@ function loadElement(elementInfo) {
 }
 
 /**
- * @type {Assert}
- */
-function assert(condition, message) {
-	if (!condition) {
-		showError('[ASSERTION]: ' + message)
-	}
-}
-
-/**
  * @type {IsRecord}
  */
 function isRecord(value) {
 	return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
+
+/**
+ * Represents error when some logic error happens which should never happen
+ *
+ * Example: HTML element by config should have one type, but we have other
+ */
+class AssertionError extends Error {
+	/**
+	 * @param {string} message
+	 */
+	constructor(message) {
+		super(message)
+		this.name = 'AssertionError'
+	}
+}
+
+/**
+ * Invariant for {@link AssertionError}
+ *
+ * @type {Assert}
+ */
+function assert(condition, message) {
+	if (!condition) {
+		throw new AssertionError(message)
+	}
+}
+
+/**
+ * Represents error for operator mistakes
+ *
+ * Example: Function to encode data was called, but image by user was not
+ * loaded yet
+ */
+class UserError extends Error {
+	/**
+	 * @param {string} message
+	 */
+	constructor(message) {
+		super(message)
+		this.name = 'UserError'
+	}
+}
+
+/**
+ * Invariant for {@link UserError}
+ *
+ * @type {Assert}
+ */
+function userAssert(condition, message) {
+	if (!condition) {
+		throw new UserError(message)
+	}
+}
+
+/**
+ * @type {ErrorHandler}
+ */
+function globalErrorHandler(err) {
+	/**
+	 * @param {string} message
+	 */
+	function showError(message) {
+		state.errorMessage = message
+		render()
+	}
+
+	if (err instanceof AssertionError) {
+		showError("Inner application error which should never happen! Check console for more details!")
+		return
+	}
+
+	if (err instanceof UserError) {
+		showError(err.message)
+		return
+	}
+
+	if (err instanceof WebAssembly.RuntimeError) {
+		showError("Something went wrong! Please check console or try again!")
+		return
+	}
+
+	console.log('Error', err)
+	showError('Catch unknown error! Check console for more details!')
+}
+
+
+window.addEventListener('error', e => {
+	globalErrorHandler(e.error)
+})
+
+window.addEventListener('unhandledrejection', event => {
+	globalErrorHandler(event.reason)
+})

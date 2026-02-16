@@ -132,7 +132,6 @@ type LoadElement = <T extends HTMLElement>(elementInfo: ElementInfo<T>) => T
 type FileToByteArray = (file: File) => Promise<Uint8Array>
 
 type ErrorHandler = (err: unknown) => void
-type ShowError = (message: string) => void
 
 type IsRecord = (value: unknown) => value is Record<string, unknown>
 
@@ -147,7 +146,7 @@ type Decode = (
 	imageType: string,
 ) => Promise<Uint8Array<ArrayBuffer> | undefined>
 
-type CheckGoOutput = <T>(content: GolangOk<T> | GolangError) => T | undefined
+type CheckGoOutput = <T>(content: GolangOk<T> | GolangError) => T
 
 /**
  * Functions from WASM Golang
