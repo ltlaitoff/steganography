@@ -254,8 +254,25 @@
 	--color-stone-950: lab(2.86037% 0.455312 0.568903);
 }
 
+/* 
+ * Hidden from user, but availabled for screen-readers and from keyboard
+ *
+ * Reference: https://www.a11yproject.com/posts/how-to-hide-content
+ */
+.visually-hidden {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+/*
+ * Hidden from user and screen-readers
+ */
 .hidden {
-	/*  TODO: hcange */
 	display: none !important;
 }
 

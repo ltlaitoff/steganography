@@ -1,7 +1,7 @@
 // prettier-ignore
 /**
-	* Set of LSB key fields
-	*
+ * Set of LSB key fields
+ *
  * @type LSBKeyParams[]
  */
 const LSB_KEY_PARAMS = [
@@ -13,6 +13,8 @@ const LSB_KEY_PARAMS = [
 // prettier-ignore
 /**
  * @type Record<LSBKeyParams, string>
+ *
+ * DEV: What if we merge LSB_KEY_PARAMS and this parsing schema into one?
  */
 const LSB_KEY_PARSING_SCHEMA = {
 	StartX: 'S', StartY: 'T', EndX: 'E',
@@ -25,6 +27,9 @@ const LSB_KEY_PARSING_SCHEMA = {
  */
 const config = {
 	wasmUrl: './main.wasm',
+
+	// DEV: globalIds, menu ids, UIids and just ids?
+	// Does it make sense?
 
 	globalIds: {
 		originalImageInput: { id: 'original-input', type: HTMLInputElement },
@@ -67,6 +72,7 @@ const config = {
 	},
 
 	// prettier-ignore
+	// DEV: If we remove LSB and DEBUG it's all about secret
 	ids: {
 		DEBUG: { id: 'debug', type: HTMLInputElement },
 
@@ -93,6 +99,7 @@ const config = {
 }
 
 // prettier-ignore
+// DEV: Rename to BASE?
 const GLOBAL = {
 	originalImagePreview: loadElement(config.globalIds.originalImagePreview),
 	originalImageInputDropZone: loadElement(config.globalIds.originalImageInputDropZone),
@@ -117,27 +124,21 @@ const UI = {
 	}
 }
 
+// prettier-ignore
+// DEV: Rename to SECRET and remove all this secret prefixes?
 const SHARED = {
 	secretAsFileCheckbox: loadElement(config.ids.SHARED.secretAsFileCheckbox),
 	encode: {
 		secretMessageInput: loadElement(config.ids.ENCODE.secretMessageInput),
 		secretFileInput: loadElement(config.ids.ENCODE.secretFileInput),
-		secretMessageInputBlock: loadElement(
-			config.ids.ENCODE.secretMessageInputBlock
-		),
+		secretMessageInputBlock: loadElement(config.ids.ENCODE.secretMessageInputBlock),
 		secretFileInputBlock: loadElement(config.ids.ENCODE.secretFileInputBlock)
 	},
 	decode: {
 		secretMessageOutput: loadElement(config.ids.DECODE.secretMessageOutput),
-		secretFileOutputButton: loadElement(
-			config.ids.DECODE.secretFileOutputButton
-		),
-		secretMessageOutputBlock: loadElement(
-			config.ids.DECODE.secretMessageOutputBlock
-		),
-		secretFileOutputButtonBlock: loadElement(
-			config.ids.DECODE.secretFileOutputButtonBlock
-		)
+		secretFileOutputButton: loadElement(config.ids.DECODE.secretFileOutputButton),
+		secretMessageOutputBlock: loadElement(config.ids.DECODE.secretMessageOutputBlock),
+		secretFileOutputButtonBlock: loadElement(config.ids.DECODE.secretFileOutputButtonBlock)
 	}
 }
 
@@ -159,6 +160,8 @@ const state = {
 
 	originalImageFile: undefined,
 	resultImageFile: undefined,
+
+	// DEV: Merge secrets?
 	secretAsFile: false,
 	secretMessage: '',
 	encodeSecretFile: undefined,
@@ -173,6 +176,11 @@ const state = {
 			GapX: 0,
 			GapY: 0,
 			ChannelsPerPixel: 3,
+
+			// DEV: All values are numbers and only this are array
+			// It will be better to change it from input to checkboxes in UI and
+			// to int in logic
+			// Like: 101 = RGB, R and B is enabled
 			Channels: ['R', 'G', 'B']
 		}
 	},
@@ -180,8 +188,11 @@ const state = {
 	errorMessage: ''
 }
 
+// DEV: Re-check all assert messages!
+
 // --
 
+// DEV: Add type checks?
 window.addEventListener('drop', e => {
 	if (
 		e.dataTransfer &&
@@ -191,6 +202,7 @@ window.addEventListener('drop', e => {
 	}
 })
 
+// DEV: Add type checks?
 window.addEventListener('dragover', e => {
 	if (!e.target) return
 
@@ -209,6 +221,7 @@ window.addEventListener('dragover', e => {
 	}
 })
 
+// DEV: Add type checks?
 GLOBAL.originalImageInputDropZone.addEventListener('dragover', e => {
 	const fileItems =
 		e.dataTransfer &&
@@ -225,6 +238,7 @@ GLOBAL.originalImageInputDropZone.addEventListener('dragover', e => {
 	}
 })
 
+// DEV: Add type checks?
 GLOBAL.originalImageInputDropZone.addEventListener('drop', e => {
 	e.preventDefault()
 
@@ -246,17 +260,21 @@ GLOBAL.originalImageInputDropZone.addEventListener('drop', e => {
 })
 
 /**
+ * Reset error in state
  *
+ * Side-effect: Change in DOM
  */
-function resetErrorHandler() {
+function resetError() {
 	state.errorMessage = ''
 	render()
 }
 
 /**
+ * TODO: Description
  * @param {HTMLInputElement} target
  */
 function lsbKeyInputHandler(target) {
+	// DEV: Magic string
 	if (target.name === 'key') {
 		if (target.value === '') return
 
@@ -272,6 +290,7 @@ function lsbKeyInputHandler(target) {
 		'Key input block input name should be one of LSB key params'
 	)
 
+	// DEV: Magic string
 	if (target.name === 'Channels') {
 		const value = target.value.split('')
 		state.LSB.key[target.name] = value
@@ -288,7 +307,7 @@ function lsbKeyInputHandler(target) {
 }
 
 /**
- *
+ * TODO: Description
  */
 function secretFileOutputHandler() {
 	assert(
@@ -298,6 +317,8 @@ function secretFileOutputHandler() {
 
 	const url = URL.createObjectURL(state.decodedSecretFile)
 
+	// DEV: It's a bad logic
+	// BUG: It will not work with big files
 	const a = document.createElement('a')
 	a.href = url
 	a.download = state.decodedSecretFile.name
@@ -308,7 +329,11 @@ function secretFileOutputHandler() {
 	URL.revokeObjectURL(url)
 }
 
+// DEV: What if we group secret handlers
+// DEV: What if we group image handlers
+
 /**
+ * TODO: Description
  * @param {ConstuctorReturnType<typeof config.ids.ENCODE.secretFileInput.type>} target
  */
 function secretFileInputHandler(target) {
@@ -321,6 +346,7 @@ function secretFileInputHandler(target) {
 }
 
 /**
+ * TODO: Description
  * @param {ConstuctorReturnType<typeof config.ids.SHARED.secretAsFileCheckbox.type>} target
  */
 function secretMessageAsFileHandler(target) {
@@ -329,6 +355,7 @@ function secretMessageAsFileHandler(target) {
 }
 
 /**
+ * TODO: Description
  *
  */
 function swapImagesHandler() {
@@ -343,6 +370,7 @@ function swapImagesHandler() {
 }
 
 /**
+ * TODO: Description
  * @param {ConstuctorReturnType<typeof config.ids.DEBUG.type>} target
  */
 function debugChangeHandler(target) {
@@ -351,6 +379,7 @@ function debugChangeHandler(target) {
 }
 
 /**
+ * TODO: Description
  * @param {ConstuctorReturnType<typeof config.globalIds.originalImageInput.type>} target
  */
 function originalImageChangeHandler(target) {
@@ -365,6 +394,7 @@ function originalImageChangeHandler(target) {
 }
 
 /**
+ * TODO: Description
  * @param {ConstuctorReturnType<typeof config.ids.ENCODE.secretMessageInput.type>} target
  */
 function secretMessageInputHandler(target) {
@@ -384,7 +414,7 @@ function initEventHandlers() {
 	typedEventListener(SHARED.decode.secretFileOutputButton, "click", config.ids.DECODE.secretFileOutputButton.type, secretFileOutputHandler)
 	typedEventListener(LSB.keyInputBlock, 'change', HTMLInputElement, lsbKeyInputHandler)
 	typedEventListener(GLOBAL.submitButton, 'click', HTMLButtonElement, submitHandler)
-	typedEventListener(UI.ERROR.button, 'click', config.UIids.ERROR.button.type, resetErrorHandler)
+	typedEventListener(UI.ERROR.button, 'click', config.UIids.ERROR.button.type, resetError)
 	typedEventListener(SHARED.encode.secretMessageInput, 'change', config.ids.ENCODE.secretMessageInput.type, secretMessageInputHandler)
 	typedEventListener(UI.menu.base, 'change', HTMLInputElement, menuChangeHandler)
 
@@ -392,6 +422,8 @@ function initEventHandlers() {
 	window.addEventListener('unhandledrejection', e => globalErrorHandler(e.reason))
 }
 
+// TODO: Description
+// DEV: Does this function make sense?
 async function prepareSecretMessage() {
 	if (state.secretAsFile === true) {
 		userAssert(
@@ -408,6 +440,7 @@ async function prepareSecretMessage() {
 }
 
 /**
+ * TODO: Description
  * @type {CheckGoOutput}
  */
 function checkGoOutput(result) {
@@ -423,6 +456,7 @@ function checkGoOutput(result) {
 	return result.data
 }
 
+// TODO: Description
 async function submitHandler() {
 	state.errorMessage = ''
 	render()
@@ -441,9 +475,15 @@ async function submitHandler() {
 		 */
 		let content
 
+		// DEV: This if/else can refactored into something better
 		if (state.activeMethod === 'LSB') {
 			content = checkGoOutput(
-				goEncodeLSB(originalImage, imageType, message, generateLsbKey(state.LSB.key))
+				goEncodeLSB(
+					originalImage,
+					imageType,
+					message,
+					generateLsbKey(state.LSB.key)
+				)
 			)
 		} else if (state.activeMethod === 'BPCS') {
 			content = checkGoOutput(goEncodeBPCS(originalImage, imageType, message))
@@ -452,6 +492,7 @@ async function submitHandler() {
 		}
 
 		// TODO: Remove
+		// DEV: This logic should be moved somewhere with description why
 		let resultImageType = imageType
 		if (imageType === 'image/jpeg') {
 			resultImageType = 'image/png'
@@ -475,9 +516,14 @@ async function submitHandler() {
 		 */
 		let content
 
+		// DEV: This if/else can refactored into something better
 		if (state.activeMethod === 'LSB') {
 			content = checkGoOutput(
-				goDecodeLSB(originalImage, decodeImageType, generateLsbKey(state.LSB.key))
+				goDecodeLSB(
+					originalImage,
+					decodeImageType,
+					generateLsbKey(state.LSB.key)
+				)
 			)
 		} else if (state.activeMethod === 'BPCS') {
 			content = checkGoOutput(goDecodeBPCS(originalImage, decodeImageType))
@@ -496,18 +542,19 @@ async function submitHandler() {
 }
 
 /**
+ * TODO: Description
  * @param {HTMLInputElement} target
  */
 function menuChangeHandler(target) {
 	assert(
 		target.name === config.menu.name.methods ||
-		target.name === config.menu.name.operation,
+			target.name === config.menu.name.operation,
 		'Menu input name should be one of menu names'
 	)
 
 	assert(
 		config.menu.value.methods.includes(target.value) ||
-		config.menu.value.operation.includes(target.value),
+			config.menu.value.operation.includes(target.value),
 		'Menu input value should be one from menu config'
 	)
 
@@ -538,7 +585,9 @@ function menuChangeHandler(target) {
 	render()
 }
 
+// DEV: Move this to top?
 async function main() {
+	// DEV: Render before load go?
 	render()
 
 	const go = new Go()
@@ -554,6 +603,7 @@ async function main() {
 main()
 
 function render() {
+	// DEV: Add helper to swap hidden's
 	if (state.activeOperation === 'ENCODE') {
 		UI.encodeBlock.classList.remove('hidden')
 		UI.decodeBlock.classList.add('hidden')
@@ -615,6 +665,8 @@ function render() {
 	setLSBKeyFields()
 }
 
+// DEV: This function should not work like that
+// It will be better to parse all inputs first, and after use them to set values
 function setLSBKeyFields() {
 	for (const key of LSB_KEY_PARAMS) {
 		const input = LSB.keyInputBlock.querySelector(`[name=${key}]`)
@@ -623,6 +675,7 @@ function setLSBKeyFields() {
 			`LSB key field with name ${key} should be HTMLInputElement`
 		)
 
+		// DEV: Magic string
 		if (key === 'Channels') {
 			input.value = state.LSB.key[key].join('')
 			continue
@@ -633,15 +686,18 @@ function setLSBKeyFields() {
 }
 
 /**
-	*	Transform whole lsb key from inner/parsed represenation to encoded/string
-	*
-	* @param {LSBKey} lsbKey
-	*/
+ * Transform whole lsb key from inner/parsed represenation to encoded/string
+ *
+ * @param {LSBKey} lsbKey
+ *
+ * DEV: I'm not sure about this function...
+ */
 function generateLsbKey(lsbKey) {
 	let result = ''
 
 	for (const param of LSB_KEY_PARAMS) {
 		if (lsbKey[param] !== undefined) {
+			// DEV: Magic string
 			if (param !== 'Channels') {
 				result += LSB_KEY_PARSING_SCHEMA[param] + lsbKey[param]
 			} else {
@@ -656,8 +712,8 @@ function generateLsbKey(lsbKey) {
 }
 
 /**
-	* Transform File to Uint8Array
-	*
+ * Transform File to Uint8Array
+ *
  * @type {(file: File) => Promise<Uint8Array>}
  */
 async function fileToByteArray(file) {
@@ -665,8 +721,8 @@ async function fileToByteArray(file) {
 }
 
 /**
-	* Get element from DOM tree with type-checks
-	*
+ * Get element from DOM tree with type-checks
+ *
  * @type {<T extends HTMLElement>(elementInfo: ElementInfo<T>) => T}
  */
 function loadElement(elementInfo) {
@@ -693,7 +749,7 @@ function typedEventListener(element, type, elementType, callback) {
 		assert(
 			e.target instanceof elementType,
 			`Event on element ${element.tagName} #${element.id} should have target` +
-			` with type ${elementType} on ${type}`
+				` with type ${elementType} on ${type}`
 		)
 
 		callback(e.target, { ...e, target: e.target })
