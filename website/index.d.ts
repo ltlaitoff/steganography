@@ -1,19 +1,6 @@
 type Methods = 'LSB' | 'BPCS'
 type Operation = 'ENCODE' | 'DECODE'
 
-/*
- * LSB Encode:
- * Checkox type
- * Message
- * Input secret file
- * Key
- *
- * LSB Decode:
- * Key
- * Checkbox type
- * Message
- */
-
 interface ElementInfo<T extends HTMLElement = HTMLElement> {
 	id: string
 	type: new () => T
@@ -79,10 +66,6 @@ interface Config {
 			secretFileOutputButtonBlock: ElementInfo<HTMLDivElement>
 		}
 	}
-	// 	// 	message: "message",
-	// }
-	// ids: Object.freeze({
-	// })
 }
 
 interface LSBKey {
@@ -128,23 +111,23 @@ type ConstuctorReturnType<T extends new (...args: any) => any> = T extends new (
 	? R
 	: any
 
-type LoadElement = <T extends HTMLElement>(elementInfo: ElementInfo<T>) => T
-type FileToByteArray = (file: File) => Promise<Uint8Array>
+type TypedEventTarget<
+	T extends HTMLElement,
+	K extends keyof HTMLElementEventMap = '',
+	E extends Event = K extends '' ? Event : HTMLElementEventMap<K>
+> = Omit<E, 'target'> & { target: T }
 
-type ErrorHandler = (err: unknown) => void
-
-type IsRecord = (value: unknown) => value is Record<string, unknown>
-
-type Encode = (
-	originalImage: Uint8Array<ArrayBufferLike>,
-	imageType: string,
-	message: Uint8Array<ArrayBufferLike>,
-) => Promise<Uint8Array<ArrayBuffer> | undefined>
-
-type Decode = (
-	originalImage: Uint8Array<ArrayBufferLike>,
-	imageType: string,
-) => Promise<Uint8Array<ArrayBuffer> | undefined>
+type TypedEventListener = <
+	K extends keyof HTMLElementEventMap,
+	T extends HTMLElement
+>(
+	// Div for grouped events
+	// TODO: Describe better
+	element: T | HTMLDivElement,
+	type: K,
+	elementType: new () => T,
+	listener: (target: T, e: TypedEventTarget<T, HTMLElementEventMap<K>>) => any
+) => void
 
 type CheckGoOutput = <T>(content: GolangOk<T> | GolangError) => T
 

@@ -1,29 +1,23 @@
+// prettier-ignore
 /**
+	* Set of LSB key fields
+	*
  * @type LSBKeyParams[]
  */
 const LSB_KEY_PARAMS = [
-	'StartX',
-	'StartY',
-	'EndX',
-	'EndY',
-	'GapX',
-	'GapY',
-	'ChannelsPerPixel',
-	'Channels'
+	'StartX', 'StartY', 'EndX',
+	'EndY', 'GapX', 'GapY',
+	'ChannelsPerPixel', 'Channels'
 ]
 
+// prettier-ignore
 /**
  * @type Record<LSBKeyParams, string>
  */
 const LSB_KEY_PARSING_SCHEMA = {
-	StartX: 'S',
-	StartY: 'T',
-	EndX: 'E',
-	EndY: 'N',
-	GapX: 'H',
-	GapY: 'V',
-	ChannelsPerPixel: 'P',
-	Channels: 'C'
+	StartX: 'S', StartY: 'T', EndX: 'E',
+	EndY: 'N', GapX: 'H', GapY: 'V',
+	ChannelsPerPixel: 'P', Channels: 'C'
 }
 
 /**
@@ -251,26 +245,22 @@ GLOBAL.originalImageInputDropZone.addEventListener('drop', e => {
 	render()
 })
 
-UI.ERROR.button.addEventListener('click', e => {
-	assert(
-		e.target instanceof config.UIids.ERROR.button.type,
-		'Event target on close error button should be equal to config type!'
-	)
-
+/**
+ *
+ */
+function resetErrorHandler() {
 	state.errorMessage = ''
 	render()
-})
+}
 
-LSB.keyInputBlock.addEventListener('change', e => {
-	assert(
-		e.target instanceof HTMLInputElement,
-		'Key input block change should be called only on input element!'
-	)
+/**
+ * @param {HTMLInputElement} target
+ */
+function lsbKeyInputHandler(target) {
+	if (target.name === 'key') {
+		if (target.value === '') return
 
-	if (e.target.name == 'key') {
-		if (e.target.value == '') return
-
-		const parsedKey = checkGoOutput(goParseLSBKey(e.target.value))
+		const parsedKey = checkGoOutput(goParseLSBKey(target.value))
 		state.LSB.key = parsedKey
 
 		render()
@@ -278,31 +268,29 @@ LSB.keyInputBlock.addEventListener('change', e => {
 	}
 
 	assert(
-		LSB_KEY_PARAMS.includes(e.target.name),
+		LSB_KEY_PARAMS.includes(target.name),
 		'Key input block input name should be one of LSB key params'
 	)
 
-	if (e.target.name === 'Channels') {
-		const value = e.target.value.split('')
-		state.LSB.key[e.target.name] = value
+	if (target.name === 'Channels') {
+		const value = target.value.split('')
+		state.LSB.key[target.name] = value
 
 		render()
 		return
 	}
 
-	const value = Number(e.target.value)
+	const value = Number(target.value)
 	assert(Number.isNaN(value) === false, 'Input number value should not be NaN!')
 
-	state.LSB.key[e.target.name] = value
+	state.LSB.key[target.name] = value
 	render()
-})
+}
 
-SHARED.decode.secretFileOutputButton.addEventListener('click', e => {
-	assert(
-		e.target instanceof config.ids.DECODE.secretFileOutputButton.type,
-		'Event target of lsb decode file output button should be equalt to config value'
-	)
-
+/**
+ *
+ */
+function secretFileOutputHandler() {
 	assert(
 		state.decodedSecretFile !== undefined,
 		'Decoded secret file lsb should be defined on click on button'
@@ -318,38 +306,32 @@ SHARED.decode.secretFileOutputButton.addEventListener('click', e => {
 
 	a.remove()
 	URL.revokeObjectURL(url)
-})
+}
 
-SHARED.encode.secretFileInput.addEventListener('change', e => {
-	assert(
-		e.target instanceof config.ids.ENCODE.secretFileInput.type,
-		'Event target of lsb secret file input should be equal to config file'
-	)
-	assert(e.target.files !== null, 'LSB secret file input should have files')
+/**
+ * @param {ConstuctorReturnType<typeof config.ids.ENCODE.secretFileInput.type>} target
+ */
+function secretFileInputHandler(target) {
+	assert(target.files !== null, 'LSB secret file input should have files')
 
-	const file = e.target.files[0]
+	const file = target.files[0]
 	userAssert(file !== undefined, 'No file selected. Please choose a file.')
 
 	state.encodeSecretFile = file
-})
+}
 
-SHARED.secretAsFileCheckbox.addEventListener('change', e => {
-	assert(
-		e.target instanceof config.ids.SHARED.secretAsFileCheckbox.type,
-		'Event target on click lsb secret as file should be same type as config'
-	)
-
-	state.secretAsFile = e.target.checked
-
+/**
+ * @param {ConstuctorReturnType<typeof config.ids.SHARED.secretAsFileCheckbox.type>} target
+ */
+function secretMessageAsFileHandler(target) {
+	state.secretAsFile = target.checked
 	render()
-})
+}
 
-UI.swapButton.addEventListener('click', e => {
-	assert(
-		e.target instanceof config.UIids.swapButton.type,
-		'Event target on click swap should be same type as config swap button'
-	)
-
+/**
+ *
+ */
+function swapImagesHandler() {
 	if (state.originalImageFile === undefined) return
 	if (state.resultImageFile === undefined) return
 
@@ -358,44 +340,57 @@ UI.swapButton.addEventListener('click', e => {
 	state.resultImageFile = temp
 
 	render()
-})
+}
 
-DEBUG.addEventListener('change', e => {
-	assert(
-		e.target instanceof config.ids.DEBUG.type,
-		'Event target on change debug should be same type as debug'
-	)
-
-	state.debugMode = e.target.checked
+/**
+ * @param {ConstuctorReturnType<typeof config.ids.DEBUG.type>} target
+ */
+function debugChangeHandler(target) {
+	state.debugMode = target.checked
 	goDebug(state.debugMode)
-})
+}
 
-GLOBAL.originalImageInput.addEventListener('change', e => {
-	assert(
-		e.target instanceof config.globalIds.originalImageInput.type,
-		'Event target on change image input should be same type as type from config'
-	)
-	assert(e.target.files !== null, 'Original image input should have files')
+/**
+ * @param {ConstuctorReturnType<typeof config.globalIds.originalImageInput.type>} target
+ */
+function originalImageChangeHandler(target) {
+	const files = target.files
+	assert(files !== null, 'Original image input should have files')
 
-	const file = e.target.files[0]
+	const file = files[0]
 	userAssert(file !== undefined, 'No file selected. Please choose a file.')
 
 	state.originalImageFile = file
 	render()
-})
+}
 
-SHARED.encode.secretMessageInput.addEventListener('change', e => {
-	assert(
-		e.target !== null,
-		'Secret message input on change event target is null!'
-	)
-	assert(
-		e.target instanceof config.ids.ENCODE.secretMessageInput.type,
-		'Secret message input on change event target should have the same type from config!'
-	)
+/**
+ * @param {ConstuctorReturnType<typeof config.ids.ENCODE.secretMessageInput.type>} target
+ */
+function secretMessageInputHandler(target) {
+	state.secretMessage = target.value
+}
 
-	state.secretMessage = e.target.value
-})
+/**
+ * Create all event handlers
+ */
+// prettier-ignore
+function initEventHandlers() {
+	typedEventListener(DEBUG, 'change', config.ids.DEBUG.type, debugChangeHandler)
+	typedEventListener(GLOBAL.originalImageInput, 'change', config.globalIds.originalImageInput.type, originalImageChangeHandler)
+	typedEventListener(UI.swapButton, 'click', config.UIids.swapButton.type, swapImagesHandler)
+	typedEventListener(SHARED.secretAsFileCheckbox, "change", config.ids.SHARED.secretAsFileCheckbox.type, secretMessageAsFileHandler)
+	typedEventListener(SHARED.encode.secretFileInput, "change", config.ids.ENCODE.secretFileInput.type, secretFileInputHandler)
+	typedEventListener(SHARED.decode.secretFileOutputButton, "click", config.ids.DECODE.secretFileOutputButton.type, secretFileOutputHandler)
+	typedEventListener(LSB.keyInputBlock, 'change', HTMLInputElement, lsbKeyInputHandler)
+	typedEventListener(GLOBAL.submitButton, 'click', HTMLButtonElement, submitHandler)
+	typedEventListener(UI.ERROR.button, 'click', config.UIids.ERROR.button.type, resetErrorHandler)
+	typedEventListener(SHARED.encode.secretMessageInput, 'change', config.ids.ENCODE.secretMessageInput.type, secretMessageInputHandler)
+	typedEventListener(UI.menu.base, 'change', HTMLInputElement, menuChangeHandler)
+
+	window.addEventListener('error', e => globalErrorHandler(e.error))
+	window.addEventListener('unhandledrejection', e => globalErrorHandler(e.reason))
+}
 
 async function prepareSecretMessage() {
 	if (state.secretAsFile === true) {
@@ -421,7 +416,7 @@ function checkGoOutput(result) {
 		'Golang function result should be always defined'
 	)
 
-	if (result.ok == false) {
+	if (result.ok === false) {
 		throw new UserError(`Error! ${result.message}`)
 	}
 
@@ -437,7 +432,7 @@ async function submitHandler() {
 	const originalImage = await fileToByteArray(state.originalImageFile)
 	const imageType = state.originalImageFile.type
 
-	if (state.activeOperation == 'ENCODE') {
+	if (state.activeOperation === 'ENCODE') {
 		const message = await prepareSecretMessage()
 		assert(message !== undefined, 'Prepared secret message should be defined!')
 
@@ -446,11 +441,11 @@ async function submitHandler() {
 		 */
 		let content
 
-		if (state.activeMethod == 'LSB') {
+		if (state.activeMethod === 'LSB') {
 			content = checkGoOutput(
-				goEncodeLSB(originalImage, imageType, message, generateLsbKey())
+				goEncodeLSB(originalImage, imageType, message, generateLsbKey(state.LSB.key))
 			)
-		} else if (state.activeMethod == 'BPCS') {
+		} else if (state.activeMethod === 'BPCS') {
 			content = checkGoOutput(goEncodeBPCS(originalImage, imageType, message))
 		} else {
 			assert(false, 'Active method not found!')
@@ -468,7 +463,7 @@ async function submitHandler() {
 		})
 	}
 
-	if (state.activeOperation == 'DECODE') {
+	if (state.activeOperation === 'DECODE') {
 		let decodeImageType = imageType
 
 		if (imageType === 'image/jpeg') {
@@ -480,11 +475,11 @@ async function submitHandler() {
 		 */
 		let content
 
-		if (state.activeMethod == 'LSB') {
+		if (state.activeMethod === 'LSB') {
 			content = checkGoOutput(
-				goDecodeLSB(originalImage, decodeImageType, generateLsbKey())
+				goDecodeLSB(originalImage, decodeImageType, generateLsbKey(state.LSB.key))
 			)
-		} else if (state.activeMethod == 'BPCS') {
+		} else if (state.activeMethod === 'BPCS') {
 			content = checkGoOutput(goDecodeBPCS(originalImage, decodeImageType))
 		} else {
 			assert(false, 'Active method not found!')
@@ -500,52 +495,48 @@ async function submitHandler() {
 	render()
 }
 
-GLOBAL.submitButton.addEventListener('click', submitHandler)
-
-UI.menu.base.addEventListener('change', e => {
+/**
+ * @param {HTMLInputElement} target
+ */
+function menuChangeHandler(target) {
 	assert(
-		e.target instanceof HTMLInputElement,
-		'Change event in menu should be only on HTMLInputElement'
-	)
-
-	assert(
-		e.target.name == config.menu.name.methods ||
-		e.target.name == config.menu.name.operation,
+		target.name === config.menu.name.methods ||
+		target.name === config.menu.name.operation,
 		'Menu input name should be one of menu names'
 	)
 
 	assert(
-		config.menu.value.methods.includes(e.target.value) ||
-		config.menu.value.operation.includes(e.target.value),
+		config.menu.value.methods.includes(target.value) ||
+		config.menu.value.operation.includes(target.value),
 		'Menu input value should be one from menu config'
 	)
 
-	if (e.target.name == config.menu.name.methods) {
-		if (e.target.checked) {
-			if (e.target.value == 'lsb') {
+	if (target.name === config.menu.name.methods) {
+		if (target.checked) {
+			if (target.value === 'lsb') {
 				state.activeMethod = 'LSB'
 			}
 
-			if (e.target.value == 'bpcs') {
+			if (target.value === 'bpcs') {
 				state.activeMethod = 'BPCS'
 			}
 		}
 	}
 
-	if (e.target.name == config.menu.name.operation) {
-		if (e.target.checked) {
-			if (e.target.value == 'encode') {
+	if (target.name === config.menu.name.operation) {
+		if (target.checked) {
+			if (target.value === 'encode') {
 				state.activeOperation = 'ENCODE'
 			}
 
-			if (e.target.value == 'decode') {
+			if (target.value === 'decode') {
 				state.activeOperation = 'DECODE'
 			}
 		}
 	}
 
 	render()
-})
+}
 
 async function main() {
 	render()
@@ -571,9 +562,9 @@ function render() {
 		UI.decodeBlock.classList.remove('hidden')
 	}
 
-	if (state.activeMethod == 'LSB') {
+	if (state.activeMethod === 'LSB') {
 		UI.lsbBlock.classList.remove('hidden')
-	} else if (state.activeMethod == 'BPCS') {
+	} else if (state.activeMethod === 'BPCS') {
 		UI.lsbBlock.classList.add('hidden')
 	}
 
@@ -620,7 +611,7 @@ function render() {
 		UI.ERROR.message.textContent = state.errorMessage
 	}
 
-	LSB.keyInputOutput.value = generateLsbKey()
+	LSB.keyInputOutput.value = generateLsbKey(state.LSB.key)
 	setLSBKeyFields()
 }
 
@@ -632,7 +623,7 @@ function setLSBKeyFields() {
 			`LSB key field with name ${key} should be HTMLInputElement`
 		)
 
-		if (key == 'Channels') {
+		if (key === 'Channels') {
 			input.value = state.LSB.key[key].join('')
 			continue
 		}
@@ -641,16 +632,21 @@ function setLSBKeyFields() {
 	}
 }
 
-function generateLsbKey() {
+/**
+	*	Transform whole lsb key from inner/parsed represenation to encoded/string
+	*
+	* @param {LSBKey} lsbKey
+	*/
+function generateLsbKey(lsbKey) {
 	let result = ''
 
-	for (const key of LSB_KEY_PARAMS) {
-		if (state.LSB.key[key] !== undefined) {
-			if (key !== 'Channels') {
-				result += LSB_KEY_PARSING_SCHEMA[key] + state.LSB.key[key]
+	for (const param of LSB_KEY_PARAMS) {
+		if (lsbKey[param] !== undefined) {
+			if (param !== 'Channels') {
+				result += LSB_KEY_PARSING_SCHEMA[param] + lsbKey[param]
 			} else {
-				result += state.LSB.key[key]
-					.map(el => LSB_KEY_PARSING_SCHEMA[key] + el)
+				result += lsbKey[param]
+					.map(el => LSB_KEY_PARSING_SCHEMA[param] + el)
 					.join('')
 			}
 		}
@@ -660,14 +656,18 @@ function generateLsbKey() {
 }
 
 /**
- * @type {FileToByteArray}
+	* Transform File to Uint8Array
+	*
+ * @type {(file: File) => Promise<Uint8Array>}
  */
 async function fileToByteArray(file) {
 	return file.arrayBuffer().then(value => new Uint8Array(value))
 }
 
 /**
- * @type {LoadElement}
+	* Get element from DOM tree with type-checks
+	*
+ * @type {<T extends HTMLElement>(elementInfo: ElementInfo<T>) => T}
  */
 function loadElement(elementInfo) {
 	const element = document.querySelector('#' + elementInfo.id)
@@ -684,10 +684,20 @@ function loadElement(elementInfo) {
 }
 
 /**
- * @type {IsRecord}
+ * Wrapper on addEventListener with additional event target type check
+ *
+ * @type {TypedEventListener}
  */
-function isRecord(value) {
-	return typeof value === 'object' && value !== null && !Array.isArray(value)
+function typedEventListener(element, type, elementType, callback) {
+	element.addEventListener(type, e => {
+		assert(
+			e.target instanceof elementType,
+			`Event on element ${element.tagName} #${element.id} should have target` +
+			` with type ${elementType} on ${type}`
+		)
+
+		callback(e.target, { ...e, target: e.target })
+	})
 }
 
 /**
@@ -744,7 +754,11 @@ function userAssert(condition, message) {
 }
 
 /**
- * @type {ErrorHandler}
+ * Project scope error handler
+ *
+ * Side-effects: Change state and call render
+ *
+ * @param {unknown} err
  */
 function globalErrorHandler(err) {
 	/**
@@ -756,7 +770,9 @@ function globalErrorHandler(err) {
 	}
 
 	if (err instanceof AssertionError) {
-		showError("Inner application error which should never happen! Check console for more details!")
+		showError(
+			'Inner application error which should never happen! Check console for more details!'
+		)
 		return
 	}
 
@@ -766,19 +782,10 @@ function globalErrorHandler(err) {
 	}
 
 	if (err instanceof WebAssembly.RuntimeError) {
-		showError("Something went wrong! Please check console or try again!")
+		showError('Something went wrong! Please check console or try again!')
 		return
 	}
 
 	console.log('Error', err)
 	showError('Catch unknown error! Check console for more details!')
 }
-
-
-window.addEventListener('error', e => {
-	globalErrorHandler(e.error)
-})
-
-window.addEventListener('unhandledrejection', event => {
-	globalErrorHandler(event.reason)
-})
