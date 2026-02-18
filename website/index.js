@@ -548,13 +548,13 @@ async function submitHandler() {
 function menuChangeHandler(target) {
 	assert(
 		target.name === config.menu.name.methods ||
-			target.name === config.menu.name.operation,
+		target.name === config.menu.name.operation,
 		'Menu input name should be one of menu names',
 	)
 
 	assert(
 		config.menu.value.methods.includes(target.value) ||
-			config.menu.value.operation.includes(target.value),
+		config.menu.value.operation.includes(target.value),
 		'Menu input value should be one from menu config',
 	)
 
@@ -587,6 +587,8 @@ function menuChangeHandler(target) {
 
 // DEV: Move this to top?
 async function main() {
+	initEventHandlers()
+
 	// DEV: Render before load go?
 	render()
 
@@ -749,7 +751,7 @@ function typedEventListener(element, type, elementType, callback) {
 		assert(
 			e.target instanceof elementType,
 			`Event on element ${element.tagName} #${element.id} should have target` +
-				` with type ${elementType} on ${type}`,
+			` with type ${elementType} on ${type}`,
 		)
 
 		callback(e.target, { ...e, target: e.target })

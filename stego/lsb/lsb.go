@@ -8,24 +8,127 @@ import (
 
 // TODO: Description
 type Key struct {
-	StartX           int
-	StartY           int
-	EndX             int
-	EndY             int
-	GapX             int
-	GapY             int
+	// StartX set X in FROM which pixel (StartX, StartY) algorithm will work
+	StartX int
+
+	// StartY set Y in FROM which pixel (StartX, StartY) algorithm will work
+	StartY int
+
+	// EndX set X in to which pixel (EndX, EndY) algorithm will work
+	EndX int
+
+	// EndY set Y in to which pixel (EndX, EndY) algorithm will work
+	EndY int
+
+	// GapX set vertical(on X axis) distance beetween pixels
+	GapX int
+
+	// GapX set horizontal(on Y axis) distance beetween pixels
+	GapY int
+
+	// ChannelsPerPixel set how many Channels should be used to encode one pixel
+	// This value should be smaller or equal to number of Channels
 	ChannelsPerPixel int
-	Channels         []string
+
+	// Channels set which channels will be used to encode data
+	Channels []string
 }
 
-// TODO: Description?
+// TODO: Check if ChannelsPerPixel <= Channels?
+
+// Options represent additional settings for LSB encoding and decoding
 type Options struct {
-	// If enabled encoding will produce visible to eye result
-	// Use to check what pixels are affected in result of algorithm
+	// VisualDebug, if enabled, then encoding will produce visible to eye result
+	// Used to check what pixels are affected in result of algorithm
 	VisualDebug bool
 
-	// Key with LSB settings
+	// Key is a additional flexible settings of LSB algorithm
 	Key Key
+}
+
+// bytesToBitsString transforms array of bytes into bits string of 0 and 1's
+// DEV: Is there are another solution?
+// Q: What if insteal of doing this I will save a bitIndex and calculate
+// shift and after message[byteIndex] >> shift? As it is implement in BPCS
+func bytesToBitsString(bytes []byte) string {
+	bits := ""
+
+	for _, byte := range bytes {
+		bits += fmt.Sprintf("%08b", byte)
+	}
+
+	return bits
+}
+
+// TODO: Add some flag to disable if text will fit?
+// Q: What if user will set EndX to 0?
+// Should I dissallow that?
+// It will be safer to set it to the -1 and check on -1.. But
+
+// lsbBoundaries calculate field in which LSB will work
+func lsbBoundaries(bounds image.Rectangle, key Key) (int, int, int, int) {
+	startX, startY := max(key.StartX, bounds.Min.X), max(key.StartY, bounds.Min.Y)
+	endX, endY := bounds.Max.X, bounds.Max.Y
+
+	if key.EndX != 0 {
+		endX = min(key.EndX, bounds.Max.X)
+	}
+
+	if key.EndY != 0 {
+		endY = min(key.EndY, bounds.Max.Y)
+	}
+
+	return startX, startY, endX, endY
+}
+
+// calculateImageCapacity returns how many bits of information can be stored
+// in image by LSB algorithm
+func calculateImageCapacity(startX, startY, endX, endY int, bounds image.Rectangle, key Key) int {
+	pixelsCount := 0
+	rowCount := (endY - startY + key.GapY) / (key.GapY + 1)
+
+	if rowCount <= 1 {
+		// Q: Should I add + key.GapX?
+		pixelsCount = (endX - startX) / (key.GapX + 1)
+
+		return pixelsCount * key.ChannelsPerPixel
+	}
+
+	firstRow := (bounds.Max.X - startX + key.GapX) / (key.GapX + 1)
+	middleRows := (bounds.Max.X - bounds.Min.X + key.GapX) / (key.GapX + 1) * (rowCount - 2)
+	endRow := (endX - bounds.Min.X + key.GapX) / (key.GapX + 1)
+
+	return (firstRow + middleRows + endRow) * key.ChannelsPerPixel
+}
+
+// visualDebug calculate RGB values for specific pixel to allow visible to eye
+// troubleshoot of internal algorithm
+func visualDebug(r, g, b, one uint8, ChannelsPerPixel int, currentChannel string, channelsMap map[string]bool) (uint8, uint8, uint8) {
+	if ChannelsPerPixel == 1 {
+		return 0, 0, 0
+	}
+
+	rgb := map[string]uint8{
+		"R": r,
+		"G": g,
+		"B": b,
+	}
+
+	for key := range channelsMap {
+		if _, ok := channelsMap[key]; !ok {
+			rgb[key] = 0
+		}
+	}
+
+	if _, ok := rgb[currentChannel]; ok {
+		rgb[currentChannel] = 0
+
+		if one == 1 {
+			rgb[currentChannel] = 255
+		}
+	}
+
+	return rgb["R"], rgb["G"], rgb["B"]
 }
 
 // TODO: Description?
@@ -33,52 +136,13 @@ type Options struct {
 func Encode(img *image.RGBA, message []byte, options Options) (*image.RGBA, error) {
 	bounds := img.Bounds()
 	key := options.Key
+	x, y, endX, endY := lsbBoundaries(bounds, key)
 
-	// DEV: Move split secret to function as well
-	// DEV: Is there are another solution?
-	res := ""
-	for _, r := range message {
-		res += fmt.Sprintf("%08b", r)
-	}
+	secret := bytesToBitsString(message)
 
-	// DEV: Too many boundary checks in main code
-	x, y := key.StartX, key.StartY
-
-	if key.StartX < bounds.Min.X {
-		x = bounds.Min.X
-	}
-
-	if key.StartY < bounds.Min.Y {
-		y = bounds.Min.Y
-	}
-
-	endX, endY := key.EndX, key.EndY
-
-	if key.EndX == 0 || key.EndX > bounds.Max.X {
-		endX = bounds.Max.X
-	}
-
-	if key.EndY == 0 || key.EndY > bounds.Max.Y {
-		endY = bounds.Max.Y
-	}
-
-	// DEV: Move check into function?
-	pixelsCount := 0
-	rowCount := (endY - y + key.GapY) / (key.GapY + 1)
-
-	if rowCount <= 1 {
-		pixelsCount = (endX - x) / (key.GapX + 1)
-	} else {
-		// DEV: What are fuck is this?
-		pixelsCount = ((bounds.Max.X - x + key.GapX) / (key.GapX + 1)) +
-			((bounds.Max.X - bounds.Min.X + key.GapX) / (key.GapX + 1) * (rowCount - 2)) +
-			((endX - bounds.Min.X + key.GapX) / (key.GapX + 1))
-	}
-
-	capacityBits := pixelsCount * key.ChannelsPerPixel
-
-	if len(res) > capacityBits {
-		return nil, fmt.Errorf("Insufficient capacity: need %d bits, have %d", len(res), capacityBits)
+	capacityBits := calculateImageCapacity(x, y, endX, endY, bounds, key)
+	if len(secret) > capacityBits {
+		return nil, fmt.Errorf("Insufficient capacity: need %d bits, have %d", len(secret), capacityBits)
 	}
 
 	counter := 0
@@ -90,7 +154,7 @@ func Encode(img *image.RGBA, message []byte, options Options) (*image.RGBA, erro
 		channelsMap[value] = true
 	}
 
-	for _, char := range res {
+	for _, char := range secret {
 		one := uint8(0)
 
 		if char == '1' {
@@ -118,47 +182,8 @@ func Encode(img *image.RGBA, message []byte, options Options) (*image.RGBA, erro
 			b ^= 1
 		}
 
-		// DEV: Refactor debug logic
 		if options.VisualDebug {
-			if key.ChannelsPerPixel == 1 {
-				r, g, b = 0, 0, 0
-			} else {
-				if _, ok := channelsMap["R"]; !ok {
-					r = 0
-				}
-
-				if _, ok := channelsMap["G"]; !ok {
-					g = 0
-				}
-
-				if _, ok := channelsMap["B"]; !ok {
-					b = 0
-				}
-			}
-
-			if one == 1 {
-				if currentChannel == "R" {
-					r = 255
-				}
-				if currentChannel == "G" {
-					g = 255
-				}
-				if currentChannel == "B" {
-					b = 255
-				}
-			}
-
-			if one == 0 {
-				if currentChannel == "R" {
-					r = 0
-				}
-				if currentChannel == "G" {
-					g = 0
-				}
-				if currentChannel == "B" {
-					b = 0
-				}
-			}
+			r, g, b = visualDebug(r, g, b, one, key.ChannelsPerPixel, currentChannel, channelsMap)
 		}
 
 		img.Set(x, y, color.RGBA{r, g, b, a})
@@ -198,11 +223,12 @@ func Encode(img *image.RGBA, message []byte, options Options) (*image.RGBA, erro
 // TODO: Description
 func Decode(img *image.RGBA, options Options, length int) ([]byte, error) {
 	bounds := img.Bounds()
+	key := options.Key
+	startX, startY, endX, endY := lsbBoundaries(bounds, key)
 
 	data := make([]byte, 0)
 	var newByte byte = 0
 
-	key := options.Key
 	i := 7
 
 	addByteToData := func() {
@@ -212,28 +238,6 @@ func Decode(img *image.RGBA, options Options, length int) ([]byte, error) {
 			i = 7
 			newByte = 0
 		}
-	}
-
-	// DEV: Same boundary check as in encode?
-
-	startX, startY := key.StartX, key.StartY
-
-	if key.StartX < bounds.Min.X {
-		startX = bounds.Min.X
-	}
-
-	if key.StartY < bounds.Min.Y {
-		startY = bounds.Min.Y
-	}
-
-	endX, endY := key.EndX, key.EndY
-
-	if key.EndX == 0 || key.EndX > bounds.Max.X {
-		endX = bounds.Max.X
-	}
-
-	if key.EndY == 0 || key.EndY > bounds.Max.Y {
-		endY = bounds.Max.Y
 	}
 
 	channelCounter := 0

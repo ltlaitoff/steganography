@@ -15,23 +15,25 @@ import (
 	"github.com/ltlaitoff/steganography/stego/lsb"
 )
 
-// TODO: Description
-type State struct {
-	// TODO: Description
-	debugMode bool
+// Parameters contain global algorithm settings and developer flags
+type Parameters struct {
+	// DebugMode, if enabled, shows additional program log's and visually to eye
+	// shows what was changed in the original image after algorithm was applied
+	// PERF: Might use additional resources
+	DebugMode bool
 }
 
-// TODO: Description
-var state State = State{
-	debugMode: false,
+var parameters Parameters = Parameters{
+	DebugMode: false,
 }
 
-// TODO: Description
+// SetDebugMode allows enable or disable a developer troubleshoot tool
 func SetDebugMode(debugMode bool) {
-	state.debugMode = debugMode
+	parameters.DebugMode = debugMode
 }
 
 // imageToRGBA is helper for convertation image.Image to image.RGBA
+// TODO: Move to image utils?
 func imageToRGBA(src image.Image) *image.RGBA {
 	if dst, ok := src.(*image.RGBA); ok {
 		return dst
@@ -166,7 +168,7 @@ func EncodeLSB(imageBytes []byte, imageType string, message []byte, key string) 
 	}
 
 	options := lsb.Options{
-		VisualDebug: state.debugMode,
+		VisualDebug: parameters.DebugMode,
 		Key:         *lsbKey,
 	}
 
@@ -201,7 +203,7 @@ func DecodeLSB(imageBytes []byte, imageType string, key string) (string, error) 
 	}
 
 	options := lsb.Options{
-		VisualDebug: state.debugMode,
+		VisualDebug: parameters.DebugMode,
 		Key:         *lsbKey,
 	}
 
