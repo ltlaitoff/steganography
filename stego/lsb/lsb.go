@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/draw"
 )
 
 // TODO: Description
@@ -31,12 +30,8 @@ type Options struct {
 
 // TODO: Description?
 // PERF: Encoding are too slow with big images w/ big secret messages
-func Encode(containerImage image.Image, message []byte, options Options) (*image.RGBA, error) {
-	// DEV: Move copy rgba into parent function
-	bounds := containerImage.Bounds()
-	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
-	draw.Draw(rgba, rgba.Bounds(), containerImage, bounds.Min, draw.Src)
-
+func Encode(img *image.RGBA, message []byte, options Options) (*image.RGBA, error) {
+	bounds := img.Bounds()
 	key := options.Key
 
 	// DEV: Move split secret to function as well
@@ -102,7 +97,7 @@ func Encode(containerImage image.Image, message []byte, options Options) (*image
 			one = 1
 		}
 
-		cr, cg, cb, ca := rgba.At(x, y).RGBA()
+		cr, cg, cb, ca := img.At(x, y).RGBA()
 
 		r := uint8(cr >> 8)
 		g := uint8(cg >> 8)
@@ -166,7 +161,7 @@ func Encode(containerImage image.Image, message []byte, options Options) (*image
 			}
 		}
 
-		rgba.Set(x, y, color.RGBA{r, g, b, a})
+		img.Set(x, y, color.RGBA{r, g, b, a})
 
 		counter++
 		channelCounter++
@@ -197,13 +192,12 @@ func Encode(containerImage image.Image, message []byte, options Options) (*image
 		}
 	}
 
-	return rgba, nil
+	return img, nil
 }
 
-func Decode(encodedImage image.Image, options Options, length int) ([]byte, error) {
-	bounds := encodedImage.Bounds()
-	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
-	draw.Draw(rgba, rgba.Bounds(), encodedImage, bounds.Min, draw.Src)
+// TODO: Description
+func Decode(img *image.RGBA, options Options, length int) ([]byte, error) {
+	bounds := img.Bounds()
 
 	data := make([]byte, 0)
 	var newByte byte = 0
@@ -252,7 +246,7 @@ func Decode(encodedImage image.Image, options Options, length int) ([]byte, erro
 		}
 
 		for ; x < bounds.Max.X; x += 1 + key.GapX {
-			cr, cg, cb, _ := rgba.At(x, y).RGBA()
+			cr, cg, cb, _ := img.At(x, y).RGBA()
 			r := uint8(cr >> 8)
 			g := uint8(cg >> 8)
 			b := uint8(cb >> 8)

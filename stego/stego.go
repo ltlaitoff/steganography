@@ -31,6 +31,19 @@ func SetDebugMode(debugMode bool) {
 	state.debugMode = debugMode
 }
 
+// imageToRGBA is helper for convertation image.Image to image.RGBA
+func imageToRGBA(src image.Image) *image.RGBA {
+	if dst, ok := src.(*image.RGBA); ok {
+		return dst
+	}
+
+	bounds := src.Bounds()
+	dst := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
+	draw.Draw(dst, dst.Bounds(), src, bounds.Min, draw.Src)
+
+	return dst
+}
+
 // TODO: Description
 func ParseLsbKey(key string) (*lsb.Key, error) {
 	parsingSchema := map[rune]string{
@@ -141,31 +154,28 @@ func EncodeLSB(imageBytes []byte, imageType string, message []byte, key string) 
 	assert.Assert(imageType != "", "Image type should have value")
 
 	inputImage, err := imageio.ParseImage(imageBytes, imageType)
-
 	if err != nil {
 		return nil, err
 	}
+
+	img := imageToRGBA(inputImage)
 
 	lsbKey, err := ParseLsbKey(key)
-
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("Key:", lsbKey)
 
 	options := lsb.Options{
 		VisualDebug: state.debugMode,
 		Key:         *lsbKey,
 	}
-	encodedImage, err := lsb.Encode(inputImage, appendSecretLengthToSecret(message), options)
 
+	encodedImage, err := lsb.Encode(img, appendSecretLengthToSecret(message), options)
 	if err != nil {
 		return nil, err
 	}
 
 	encodedBytes, err := imageio.EncodeImage(encodedImage, getResultImageType(imageType))
-
 	if err != nil {
 		return nil, err
 	}
@@ -182,20 +192,20 @@ func DecodeLSB(imageBytes []byte, imageType string, key string) (string, error) 
 		return "", err
 	}
 
+	img := imageToRGBA(inputImage)
+
 	lsbKey, err := ParseLsbKey(key)
 
 	if err != nil {
 		return "", err
 	}
 
-	fmt.Println("Key:", lsbKey)
-
 	options := lsb.Options{
 		VisualDebug: state.debugMode,
 		Key:         *lsbKey,
 	}
 
-	secretLengthString, err := lsb.Decode(inputImage, options, 4)
+	secretLengthString, err := lsb.Decode(img, options, 4)
 
 	if err != nil {
 		return "", err
@@ -203,7 +213,7 @@ func DecodeLSB(imageBytes []byte, imageType string, key string) (string, error) 
 
 	secretLength := binary.LittleEndian.Uint32(secretLengthString)
 
-	result, err := lsb.Decode(inputImage, options, int(4+secretLength))
+	result, err := lsb.Decode(img, options, int(4+secretLength))
 
 	if err != nil {
 		return "", err
@@ -222,18 +232,15 @@ func EncodeBPCS(imageBytes []byte, imageType string, message []byte) ([]byte, er
 		return nil, err
 	}
 
-	// TODO: Move this into function?
-	bounds := inputImage.Bounds()
-	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
-	draw.Draw(rgba, rgba.Bounds(), inputImage, bounds.Min, draw.Src)
+	img := imageToRGBA(inputImage)
 
-	err = bpcs.EncodeBPCS(rgba, appendSecretLengthToSecret(message))
+	err = bpcs.EncodeBPCS(img, appendSecretLengthToSecret(message))
 
 	if err != nil {
 		return nil, err
 	}
 
-	encodedBytes, err := imageio.EncodeImage(rgba, getResultImageType(imageType))
+	encodedBytes, err := imageio.EncodeImage(img, getResultImageType(imageType))
 
 	if err != nil {
 		return nil, err
@@ -251,15 +258,12 @@ func DecodeBPCS(imageBytes []byte, imageType string) (string, error) {
 		return "", err
 	}
 
-	// TODO: Move this into function?
-	bounds := inputImage.Bounds()
-	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
-	draw.Draw(rgba, rgba.Bounds(), inputImage, bounds.Min, draw.Src)
+	img := imageToRGBA(inputImage)
 
-	secretLengthString := bpcs.DecodeBPCS(rgba, 4)
+	secretLengthString := bpcs.DecodeBPCS(img, 4)
 	secretLength := binary.LittleEndian.Uint32(secretLengthString)
 
-	result := bpcs.DecodeBPCS(rgba, int(4+secretLength))
+	result := bpcs.DecodeBPCS(img, int(4+secretLength))
 
 	return string(result[4:]), nil
 }
