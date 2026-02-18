@@ -1,5 +1,7 @@
 package bpcs
 
+// DEV: Rewrite everything from zero
+
 import (
 	"fmt"
 	"image"

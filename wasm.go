@@ -9,6 +9,9 @@ import (
 	"github.com/ltlaitoff/steganography/stego"
 )
 
+// DEV: It will be cool if debug mode actually enable all debug comments 
+// in console as well
+
 func encodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 	imageType := args[1].String()
 	message := JSToGoBytes(args[2])
@@ -103,6 +106,7 @@ func parseLSBKey(this js.Value, args []js.Value) interface{} {
 
 	// Cast for js.ValueOf
 	channels := make([]any, len(result.Channels))
+
 	for i := range channels {
 		channels[i] = result.Channels[i]
 	}

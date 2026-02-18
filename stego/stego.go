@@ -15,18 +15,23 @@ import (
 	"github.com/ltlaitoff/steganography/stego/lsb"
 )
 
+// TODO: Description
 type State struct {
+	// TODO: Description
 	debugMode bool
 }
 
+// TODO: Description
 var state State = State{
 	debugMode: false,
 }
 
+// TODO: Description
 func SetDebugMode(debugMode bool) {
 	state.debugMode = debugMode
 }
 
+// TODO: Description
 func ParseLsbKey(key string) (*lsb.Key, error) {
 	parsingSchema := map[rune]string{
 		'S': "StartX",
@@ -49,8 +54,10 @@ func ParseLsbKey(key string) (*lsb.Key, error) {
 		assert.Assert(current != "", "TODO 4")
 		field := val.FieldByName(current)
 
+		// DEV: Fix
 		assert.Assert(field.IsValid(), fmt.Errorf("Field is not valid", field, "current:", current).Error())
 
+		// DEV: It's just shit
 		if current == "Channels" {
 			assert.Assert(field.Kind() == reflect.Slice, "Channels key field should be slice!")
 
@@ -69,6 +76,7 @@ func ParseLsbKey(key string) (*lsb.Key, error) {
 		return nil
 	}
 
+	// DEV: Was?
 	for _, char := range key {
 		if unicode.IsLetter(char) {
 			if property, ok := parsingSchema[char]; ok {
@@ -104,6 +112,7 @@ func ParseLsbKey(key string) (*lsb.Key, error) {
 	return result, nil
 }
 
+// DEV: Add description WHY it works like that
 // Default is png, for jpeg png too
 func getResultImageType(imageType string) string {
 	if imageType == "image/png" {
@@ -119,6 +128,7 @@ func getResultImageType(imageType string) string {
 
 // TODO:: Remove imageType?
 
+// TODO: Description and rename?
 func appendSecretLengthToSecret(message []byte) []byte {
 	secretLength := make([]byte, 4)
 	binary.LittleEndian.PutUint32(secretLength, uint32(len(message)))
@@ -126,6 +136,7 @@ func appendSecretLengthToSecret(message []byte) []byte {
 	return append(secretLength, message...)
 }
 
+// TODO: Description
 func EncodeLSB(imageBytes []byte, imageType string, message []byte, key string) ([]byte, error) {
 	assert.Assert(imageType != "", "Image type should have value")
 
@@ -162,6 +173,7 @@ func EncodeLSB(imageBytes []byte, imageType string, message []byte, key string) 
 	return encodedBytes, nil
 }
 
+// TODO: Description
 func DecodeLSB(imageBytes []byte, imageType string, key string) (string, error) {
 	assert.Assert(imageType != "", "Image type should have value")
 	inputImage, err := imageio.ParseImage(imageBytes, imageType)
@@ -200,6 +212,7 @@ func DecodeLSB(imageBytes []byte, imageType string, key string) (string, error) 
 	return string(result[4:]), nil
 }
 
+// TODO: Description
 func EncodeBPCS(imageBytes []byte, imageType string, message []byte) ([]byte, error) {
 	assert.Assert(imageType != "", "Image type should have value")
 
@@ -209,12 +222,13 @@ func EncodeBPCS(imageBytes []byte, imageType string, message []byte) ([]byte, er
 		return nil, err
 	}
 
+	// TODO: Move this into function?
 	bounds := inputImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), inputImage, bounds.Min, draw.Src)
 
 	err = bpcs.EncodeBPCS(rgba, appendSecretLengthToSecret(message))
-	
+
 	if err != nil {
 		return nil, err
 	}
@@ -228,6 +242,7 @@ func EncodeBPCS(imageBytes []byte, imageType string, message []byte) ([]byte, er
 	return encodedBytes, nil
 }
 
+// TODO: Description
 func DecodeBPCS(imageBytes []byte, imageType string) (string, error) {
 	assert.Assert(imageType != "", "Image type should have value")
 	inputImage, err := imageio.ParseImage(imageBytes, imageType)
@@ -236,6 +251,7 @@ func DecodeBPCS(imageBytes []byte, imageType string) (string, error) {
 		return "", err
 	}
 
+	// TODO: Move this into function?
 	bounds := inputImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), inputImage, bounds.Min, draw.Src)

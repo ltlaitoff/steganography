@@ -35,22 +35,22 @@ const config = {
 		originalImageInput: { id: 'original-input', type: HTMLInputElement },
 		originalImageInputDropZone: {
 			id: 'original-input-drop-zone',
-			type: HTMLLabelElement
+			type: HTMLLabelElement,
 		},
 		originalImagePreview: { id: 'original-preview', type: HTMLImageElement },
 		resultImagePreview: { id: 'result-preview', type: HTMLImageElement },
-		submitButton: { id: 'submit-button', type: HTMLButtonElement }
+		submitButton: { id: 'submit-button', type: HTMLButtonElement },
 	},
 
 	menu: {
 		name: {
 			methods: 'menu-method',
-			operation: 'menu-operation'
+			operation: 'menu-operation',
 		},
 		value: {
 			methods: ['lsb', 'bpcs'],
-			operation: ['encode', 'decode']
-		}
+			operation: ['encode', 'decode'],
+		},
 	},
 
 	// prettier-ignore
@@ -95,7 +95,7 @@ const config = {
 			keyInputBlock: { id: "lsb-secret-key-block", type: HTMLDivElement },
 			keyInputOutput: { id: 'lsb-secret-key', type: HTMLInputElement },
 		},
-	}
+	},
 }
 
 // prettier-ignore
@@ -111,7 +111,7 @@ const GLOBAL = {
 const UI = {
 	menu: {
 		base: loadElement(config.UIids.menu.base),
-		methods: loadElement(config.UIids.menu.methods)
+		methods: loadElement(config.UIids.menu.methods),
 	},
 	lsbBlock: loadElement(config.UIids.lsbBlock),
 	encodeBlock: loadElement(config.UIids.encodeBlock),
@@ -120,8 +120,8 @@ const UI = {
 	ERROR: {
 		block: loadElement(config.UIids.ERROR.block),
 		message: loadElement(config.UIids.ERROR.message),
-		button: loadElement(config.UIids.ERROR.button)
-	}
+		button: loadElement(config.UIids.ERROR.button),
+	},
 }
 
 // prettier-ignore
@@ -181,11 +181,11 @@ const state = {
 			// It will be better to change it from input to checkboxes in UI and
 			// to int in logic
 			// Like: 101 = RGB, R and B is enabled
-			Channels: ['R', 'G', 'B']
-		}
+			Channels: ['R', 'G', 'B'],
+		},
 	},
 
-	errorMessage: ''
+	errorMessage: '',
 }
 
 // DEV: Re-check all assert messages!
@@ -252,7 +252,7 @@ GLOBAL.originalImageInputDropZone.addEventListener('drop', e => {
 
 	userAssert(
 		firstFile !== undefined && firstFile !== null,
-		'No file selected. Please choose a file.'
+		'No file selected. Please choose a file.',
 	)
 
 	state.originalImageFile = firstFile
@@ -287,7 +287,7 @@ function lsbKeyInputHandler(target) {
 
 	assert(
 		LSB_KEY_PARAMS.includes(target.name),
-		'Key input block input name should be one of LSB key params'
+		'Key input block input name should be one of LSB key params',
 	)
 
 	// DEV: Magic string
@@ -312,7 +312,7 @@ function lsbKeyInputHandler(target) {
 function secretFileOutputHandler() {
 	assert(
 		state.decodedSecretFile !== undefined,
-		'Decoded secret file lsb should be defined on click on button'
+		'Decoded secret file lsb should be defined on click on button',
 	)
 
 	const url = URL.createObjectURL(state.decodedSecretFile)
@@ -428,7 +428,7 @@ async function prepareSecretMessage() {
 	if (state.secretAsFile === true) {
 		userAssert(
 			state.encodeSecretFile !== undefined,
-			'Secret file should exists to run LSB encoding'
+			'Secret file should exists to run LSB encoding',
 		)
 
 		return await fileToByteArray(state.encodeSecretFile)
@@ -446,7 +446,7 @@ async function prepareSecretMessage() {
 function checkGoOutput(result) {
 	assert(
 		result !== undefined,
-		'Golang function result should be always defined'
+		'Golang function result should be always defined',
 	)
 
 	if (result.ok === false) {
@@ -482,8 +482,8 @@ async function submitHandler() {
 					originalImage,
 					imageType,
 					message,
-					generateLsbKey(state.LSB.key)
-				)
+					generateLsbKey(state.LSB.key),
+				),
 			)
 		} else if (state.activeMethod === 'BPCS') {
 			content = checkGoOutput(goEncodeBPCS(originalImage, imageType, message))
@@ -500,7 +500,7 @@ async function submitHandler() {
 
 		const blob = new Blob([content], { type: resultImageType })
 		state.resultImageFile = new File([blob], `result.${blob.type}`, {
-			type: blob.type
+			type: blob.type,
 		})
 	}
 
@@ -522,8 +522,8 @@ async function submitHandler() {
 				goDecodeLSB(
 					originalImage,
 					decodeImageType,
-					generateLsbKey(state.LSB.key)
-				)
+					generateLsbKey(state.LSB.key),
+				),
 			)
 		} else if (state.activeMethod === 'BPCS') {
 			content = checkGoOutput(goDecodeBPCS(originalImage, decodeImageType))
@@ -549,13 +549,13 @@ function menuChangeHandler(target) {
 	assert(
 		target.name === config.menu.name.methods ||
 			target.name === config.menu.name.operation,
-		'Menu input name should be one of menu names'
+		'Menu input name should be one of menu names',
 	)
 
 	assert(
 		config.menu.value.methods.includes(target.value) ||
 			config.menu.value.operation.includes(target.value),
-		'Menu input value should be one from menu config'
+		'Menu input value should be one from menu config',
 	)
 
 	if (target.name === config.menu.name.methods) {
@@ -594,7 +594,7 @@ async function main() {
 
 	const wasmModule = await WebAssembly.instantiateStreaming(
 		fetch(config.wasmUrl),
-		go.importObject
+		go.importObject,
 	)
 
 	go.run(wasmModule.instance)
@@ -620,7 +620,7 @@ function render() {
 
 	if (state.originalImageFile) {
 		GLOBAL.originalImagePreview.src = URL.createObjectURL(
-			state.originalImageFile
+			state.originalImageFile,
 		)
 		GLOBAL.originalImagePreview.classList.remove('hidden')
 		GLOBAL.originalImageInputDropZone.classList.add('hidden')
@@ -672,7 +672,7 @@ function setLSBKeyFields() {
 		const input = LSB.keyInputBlock.querySelector(`[name=${key}]`)
 		assert(
 			input instanceof HTMLInputElement,
-			`LSB key field with name ${key} should be HTMLInputElement`
+			`LSB key field with name ${key} should be HTMLInputElement`,
 		)
 
 		// DEV: Magic string
@@ -729,11 +729,11 @@ function loadElement(elementInfo) {
 	const element = document.querySelector('#' + elementInfo.id)
 	assert(
 		element !== null,
-		`Element with id \"#${elementInfo.id}\" should not be null!`
+		`Element with id \"#${elementInfo.id}\" should not be null!`,
 	)
 	assert(
 		element instanceof elementInfo.type,
-		`Element with id \"#${elementInfo.id}\" should be instance of ${elementInfo.type.name}!`
+		`Element with id \"#${elementInfo.id}\" should be instance of ${elementInfo.type.name}!`,
 	)
 
 	return element
@@ -749,7 +749,7 @@ function typedEventListener(element, type, elementType, callback) {
 		assert(
 			e.target instanceof elementType,
 			`Event on element ${element.tagName} #${element.id} should have target` +
-				` with type ${elementType} on ${type}`
+				` with type ${elementType} on ${type}`,
 		)
 
 		callback(e.target, { ...e, target: e.target })
@@ -827,7 +827,7 @@ function globalErrorHandler(err) {
 
 	if (err instanceof AssertionError) {
 		showError(
-			'Inner application error which should never happen! Check console for more details!'
+			'Inner application error which should never happen! Check console for more details!',
 		)
 		return
 	}

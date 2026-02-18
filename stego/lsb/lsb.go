@@ -7,6 +7,7 @@ import (
 	"image/draw"
 )
 
+// TODO: Description
 type Key struct {
 	StartX           int
 	StartY           int
@@ -18,6 +19,7 @@ type Key struct {
 	Channels         []string
 }
 
+// TODO: Description?
 type Options struct {
 	// If enabled encoding will produce visible to eye result
 	// Use to check what pixels are affected in result of algorithm
@@ -27,18 +29,24 @@ type Options struct {
 	Key Key
 }
 
+// TODO: Description?
+// PERF: Encoding are too slow with big images w/ big secret messages
 func Encode(containerImage image.Image, message []byte, options Options) (*image.RGBA, error) {
+	// DEV: Move copy rgba into parent function
 	bounds := containerImage.Bounds()
 	rgba := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rgba, rgba.Bounds(), containerImage, bounds.Min, draw.Src)
 
 	key := options.Key
 
+	// DEV: Move split secret to function as well
+	// DEV: Is there are another solution?
 	res := ""
 	for _, r := range message {
 		res += fmt.Sprintf("%08b", r)
 	}
 
+	// DEV: Too many boundary checks in main code
 	x, y := key.StartX, key.StartY
 
 	if key.StartX < bounds.Min.X {
@@ -59,12 +67,14 @@ func Encode(containerImage image.Image, message []byte, options Options) (*image
 		endY = bounds.Max.Y
 	}
 
+	// DEV: Move check into function?
 	pixelsCount := 0
 	rowCount := (endY - y + key.GapY) / (key.GapY + 1)
 
 	if rowCount <= 1 {
 		pixelsCount = (endX - x) / (key.GapX + 1)
 	} else {
+		// DEV: What are fuck is this?
 		pixelsCount = ((bounds.Max.X - x + key.GapX) / (key.GapX + 1)) +
 			((bounds.Max.X - bounds.Min.X + key.GapX) / (key.GapX + 1) * (rowCount - 2)) +
 			((endX - bounds.Min.X + key.GapX) / (key.GapX + 1))
@@ -113,6 +123,7 @@ func Encode(containerImage image.Image, message []byte, options Options) (*image
 			b ^= 1
 		}
 
+		// DEV: Refactor debug logic
 		if options.VisualDebug {
 			if key.ChannelsPerPixel == 1 {
 				r, g, b = 0, 0, 0
@@ -208,6 +219,8 @@ func Decode(encodedImage image.Image, options Options, length int) ([]byte, erro
 			newByte = 0
 		}
 	}
+
+	// DEV: Same boundary check as in encode?
 
 	startX, startY := key.StartX, key.StartY
 

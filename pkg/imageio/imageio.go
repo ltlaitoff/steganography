@@ -1,4 +1,4 @@
-package imageio 
+package imageio
 
 import (
 	"bytes"
@@ -11,10 +11,12 @@ import (
 	"golang.org/x/image/bmp"
 )
 
-func ParseImage(imageBytes []byte, imageTyp string) (image.Image, error) {
-	assert.Assert(imageTyp != "", "Image type should have value")
+// TODO: Description
+// DEV: Refactor?
+func ParseImage(imageBytes []byte, imageType string) (image.Image, error) {
+	assert.Assert(imageType != "", "Image type should have value")
 
-	switch imageTyp {
+	switch imageType {
 	case "image/png":
 		img, err := png.Decode(bytes.NewReader(imageBytes))
 
@@ -26,6 +28,7 @@ func ParseImage(imageBytes []byte, imageTyp string) (image.Image, error) {
 
 	case "image/jpeg":
 		img, err := jpeg.Decode(bytes.NewReader(imageBytes))
+
 		if err != nil {
 			return nil, fmt.Errorf("Unable to decode jpeg")
 		}
@@ -45,9 +48,10 @@ func ParseImage(imageBytes []byte, imageTyp string) (image.Image, error) {
 	return nil, fmt.Errorf("Invalid image format")
 }
 
+// TODO: Description
 func EncodeImage(image image.Image, imageType string) ([]byte, error) {
 	assert.Assert(imageType != "", "Image type should have value")
-	
+
 	buf := new(bytes.Buffer)
 
 	switch imageType {
