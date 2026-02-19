@@ -147,26 +147,22 @@ interface GolangOk<T> {
 
 declare function goEncodeLSB(
 	image: Uint8Array,
-	imageType: string,
 	secretMessage: Uint8Array,
 	key: string
 ): GolangError | GolangOk<Uint8Array<ArrayBuffer>>
 
 declare function goDecodeLSB(
 	image: Uint8Array,
-	imageType: string,
 	key: string
 ): GolangError | GolangOk<Uint8Array<ArrayBuffer>>
 
 declare function goEncodeBPCS(
 	image: Uint8Array,
-	imageType: string,
 	secretMessage: Uint8Array
 ): GolangError | GolangOk<Uint8Array<ArrayBuffer>>
 
 declare function goDecodeBPCS(
 	image: Uint8Array,
-	imageType: string
 ): GolangError | GolangOk<Uint8Array<ArrayBuffer>>
 
 declare function goDebug(debugMode: boolean): void

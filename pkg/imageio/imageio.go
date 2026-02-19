@@ -12,58 +12,33 @@ import (
 )
 
 // TODO: Description
-// DEV: Refactor?
-func ParseImage(imageBytes []byte, imageType string) (image.Image, error) {
-	assert.Assert(imageType != "", "Image type should have value")
+func ParseImage(imageBytes []byte) (image.Image, string, error) {
+	img, imageType, err := image.Decode(bytes.NewReader(imageBytes))
 
-	switch imageType {
-	case "image/png":
-		img, err := png.Decode(bytes.NewReader(imageBytes))
-
-		if err != nil {
-			return nil, fmt.Errorf("Unable to decode png")
-		}
-
-		return img, nil
-
-	case "image/jpeg":
-		img, err := jpeg.Decode(bytes.NewReader(imageBytes))
-
-		if err != nil {
-			return nil, fmt.Errorf("Unable to decode jpeg")
-		}
-
-		return img, nil
-
-	case "image/bmp":
-		img, err := bmp.Decode(bytes.NewReader(imageBytes))
-
-		if err != nil {
-			return nil, fmt.Errorf("Unable to decode bmp")
-		}
-
-		return img, nil
+	if err != nil {
+		return nil, "", fmt.Errorf("Invalid image format")
 	}
 
-	return nil, fmt.Errorf("Invalid image format")
+	return img, imageType, nil
 }
 
 // TODO: Description
 func EncodeImage(image image.Image, imageType string) ([]byte, error) {
-	assert.Assert(imageType != "", "Image type should have value")
+	fmt.Println("Encode image was called with type", imageType)
+	assert.Assert(imageType != "", "Image type should have value on image encoding")
 
 	buf := new(bytes.Buffer)
 
 	switch imageType {
-	case "image/png":
+	case "png":
 		if err := png.Encode(buf, image); err != nil {
 			return nil, fmt.Errorf("unable to encode png")
 		}
-	case "image/jpeg":
+	case "jpeg":
 		if err := jpeg.Encode(buf, image, nil); err != nil {
 			return nil, fmt.Errorf("Unable to encode jpeg")
 		}
-	case "image/bmp":
+	case "bmp":
 		if err := bmp.Encode(buf, image); err != nil {
 			return nil, fmt.Errorf("Unable to encode bmp")
 		}

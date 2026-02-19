@@ -13,12 +13,11 @@ import (
 // in console as well
 
 func encodeLsbWrapper(this js.Value, args []js.Value) interface{} {
-	imageType := args[1].String()
-	message := JSToGoBytes(args[2])
 	containerImage := JSToGoBytes(args[0])
-	key := args[3].String()
+	message := JSToGoBytes(args[1])
+	key := args[2].String()
 
-	encodedImage, err := stego.EncodeLSB(containerImage, imageType, message, key)
+	encodedImage, err := stego.EncodeLSB(containerImage, message, key)
 
 	if err != nil {
 		return JsError(err.Error())
@@ -34,10 +33,9 @@ func decodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 	fmt.Println("[GO]: Run Decode LSB")
 
 	image := JSToGoBytes(args[0])
-	imageType := args[1].String()
-	key := args[2].String()
+	key := args[1].String()
 
-	result, err := stego.DecodeLSB(image, imageType, key)
+	result, err := stego.DecodeLSB(image, key)
 
 	if err != nil {
 		return JsError(err.Error())
@@ -52,11 +50,10 @@ func decodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 func encodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
 	fmt.Println("[GO]: Run BPCS Encode")
 
-	imageType := args[1].String()
-	message := JSToGoBytes(args[2])
 	containerImage := JSToGoBytes(args[0])
+	message := JSToGoBytes(args[1])
 
-	encodedImage, err := stego.EncodeBPCS(containerImage, imageType, message)
+	encodedImage, err := stego.EncodeBPCS(containerImage, message)
 
 	if err != nil {
 		return JsError(err.Error())
@@ -72,9 +69,8 @@ func decodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
 	fmt.Println("[GO]: Run Decode LSB")
 
 	image := JSToGoBytes(args[0])
-	imageType := args[1].String()
 
-	result, err := stego.DecodeBPCS(image, imageType)
+	result, err := stego.DecodeBPCS(image)
 
 	if err != nil {
 		return JsError(err.Error())

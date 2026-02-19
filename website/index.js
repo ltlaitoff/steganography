@@ -464,8 +464,6 @@ async function submitHandler() {
 	userAssert(state.originalImageFile !== undefined, 'Image is not loaded!')
 
 	const originalImage = await fileToByteArray(state.originalImageFile)
-	const imageType = state.originalImageFile.type
-
 	if (state.activeOperation === 'ENCODE') {
 		const message = await prepareSecretMessage()
 		assert(message !== undefined, 'Prepared secret message should be defined!')
@@ -480,37 +478,23 @@ async function submitHandler() {
 			content = checkGoOutput(
 				goEncodeLSB(
 					originalImage,
-					imageType,
 					message,
 					generateLsbKey(state.LSB.key),
 				),
 			)
 		} else if (state.activeMethod === 'BPCS') {
-			content = checkGoOutput(goEncodeBPCS(originalImage, imageType, message))
+			content = checkGoOutput(goEncodeBPCS(originalImage, message))
 		} else {
 			assert(false, 'Active method not found!')
 		}
 
-		// TODO: Remove
-		// DEV: This logic should be moved somewhere with description why
-		let resultImageType = imageType
-		if (imageType === 'image/jpeg') {
-			resultImageType = 'image/png'
-		}
-
-		const blob = new Blob([content], { type: resultImageType })
+		const blob = new Blob([content])
 		state.resultImageFile = new File([blob], `result.${blob.type}`, {
 			type: blob.type,
 		})
 	}
 
 	if (state.activeOperation === 'DECODE') {
-		let decodeImageType = imageType
-
-		if (imageType === 'image/jpeg') {
-			decodeImageType = 'image/png'
-		}
-
 		/**
 		 * @type {Uint8Array<ArrayBuffer>}
 		 */
@@ -521,12 +505,11 @@ async function submitHandler() {
 			content = checkGoOutput(
 				goDecodeLSB(
 					originalImage,
-					decodeImageType,
 					generateLsbKey(state.LSB.key),
 				),
 			)
 		} else if (state.activeMethod === 'BPCS') {
-			content = checkGoOutput(goDecodeBPCS(originalImage, decodeImageType))
+			content = checkGoOutput(goDecodeBPCS(originalImage))
 		} else {
 			assert(false, 'Active method not found!')
 		}

@@ -82,9 +82,9 @@ func ParseLsbKey(key string) (*lsb.Key, error) {
 		// will work as it should
 		if property == "Channels" {
 			assert.Assert(field.Kind() == reflect.Slice, "Channels key field should be slice!")
-			if buffer == string(lsb.ChannelR) ||
-				buffer == string(lsb.ChannelG) ||
-				buffer == string(lsb.ChannelB) {
+			if buffer != string(lsb.ChannelR) &&
+				buffer != string(lsb.ChannelG) &&
+				buffer != string(lsb.ChannelB) {
 				return fmt.Errorf(
 					"Only color channels('R', 'B', 'G') are allowed "+
 						"as part of Channels LSB key! Value %s is not valid!",
@@ -145,15 +145,15 @@ func ParseLsbKey(key string) (*lsb.Key, error) {
 // DEV: Add description WHY it works like that
 // Default is png, for jpeg png too
 func getResultImageType(imageType string) string {
-	if imageType == "image/png" {
-		return "image/png"
+	if imageType == "png" {
+		return "png"
 	}
 
-	if imageType == "image/bmp" {
-		return "image/bmp"
+	if imageType == "bmp" {
+		return "bmp"
 	}
 
-	return "image/png"
+	return "png"
 }
 
 // addSecretLength adds a length of the secret message to start
@@ -166,13 +166,10 @@ func addSecretLength(message []byte) []byte {
 	return append(secretLength, message...)
 }
 
-// TODO:: Remove imageType?
-
 // TODO: Description
-func EncodeLSB(imageBytes []byte, imageType string, message []byte, key string) ([]byte, error) {
-	assert.Assert(imageType != "", "Image type should have value")
+func EncodeLSB(imageBytes []byte, message []byte, key string) ([]byte, error) {
+	inputImage, imageType, err := imageio.ParseImage(imageBytes)
 
-	inputImage, err := imageio.ParseImage(imageBytes, imageType)
 	if err != nil {
 		return nil, err
 	}
@@ -203,9 +200,8 @@ func EncodeLSB(imageBytes []byte, imageType string, message []byte, key string) 
 }
 
 // TODO: Description
-func DecodeLSB(imageBytes []byte, imageType string, key string) ([]byte, error) {
-	assert.Assert(imageType != "", "Image type should have value")
-	inputImage, err := imageio.ParseImage(imageBytes, imageType)
+func DecodeLSB(imageBytes []byte, key string) ([]byte, error) {
+	inputImage, _, err := imageio.ParseImage(imageBytes)
 
 	if err != nil {
 		return nil, err
@@ -242,10 +238,8 @@ func DecodeLSB(imageBytes []byte, imageType string, key string) ([]byte, error) 
 }
 
 // TODO: Description
-func EncodeBPCS(imageBytes []byte, imageType string, message []byte) ([]byte, error) {
-	assert.Assert(imageType != "", "Image type should have value")
-
-	inputImage, err := imageio.ParseImage(imageBytes, imageType)
+func EncodeBPCS(imageBytes []byte, message []byte) ([]byte, error) {
+	inputImage, imageType, err := imageio.ParseImage(imageBytes)
 
 	if err != nil {
 		return nil, err
@@ -269,9 +263,8 @@ func EncodeBPCS(imageBytes []byte, imageType string, message []byte) ([]byte, er
 }
 
 // TODO: Description
-func DecodeBPCS(imageBytes []byte, imageType string) ([]byte, error) {
-	assert.Assert(imageType != "", "Image type should have value")
-	inputImage, err := imageio.ParseImage(imageBytes, imageType)
+func DecodeBPCS(imageBytes []byte) ([]byte, error) {
+	inputImage, _, err := imageio.ParseImage(imageBytes)
 
 	if err != nil {
 		return nil, err
