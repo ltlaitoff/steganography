@@ -28,6 +28,7 @@ var parameters Parameters = Parameters{
 }
 
 // SetDebugMode allows enable or disable a developer troubleshoot tool
+// Check Parameters.DebugMode for more information
 func SetDebugMode(debugMode bool) {
 	parameters.DebugMode = debugMode
 }
@@ -46,7 +47,8 @@ func imageToRGBA(src image.Image) *image.RGBA {
 	return dst
 }
 
-// TODO: Description
+// ParseLsbKey transform "encoded" string representation of LSB key into
+// actual struct with fields to future use in algorithm
 func ParseLsbKey(key string) (*lsb.Key, error) {
 	parsingSchema := map[rune]string{
 		'S': "StartX",
@@ -60,68 +62,81 @@ func ParseLsbKey(key string) (*lsb.Key, error) {
 	}
 
 	result := &lsb.Key{}
-	val := reflect.ValueOf(result).Elem()
 
-	current := ""
+	property := ""
 	buffer := ""
 
-	saveCurrent := func() error {
-		assert.Assert(current != "", "TODO 4")
-		field := val.FieldByName(current)
-
-		// DEV: Fix
-		assert.Assert(field.IsValid(), fmt.Errorf("Field is not valid", field, "current:", current).Error())
-
-		// DEV: It's just shit
-		if current == "Channels" {
-			assert.Assert(field.Kind() == reflect.Slice, "Channels key field should be slice!")
-
-			field.Set(reflect.Append(field, reflect.ValueOf(buffer)))
-		} else {
-			assert.Assert(field.Kind() == reflect.Int, "Other fields without Channels should be int!")
-			num, err := strconv.Atoi(buffer)
-
-			if err != nil {
-				return err
-			}
-
-			field.SetInt(int64(num))
+	saveCurrent := func(property string) error {
+		if property == "" {
+			return nil
 		}
 
+		resultValue := reflect.ValueOf(result).Elem()
+
+		field := resultValue.FieldByName(property)
+		assert.Assert(field.IsValid(), fmt.Errorf("Field is not valid! Property: %s", property).Error())
+
+		// NOTE: Channels is a unique structure in lsb key because it's an olny slice
+		// We cannot change channels to int because then it will lose it's
+		// flexibility. As example we can set GRB instead of RGB right now and it
+		// will work as it should
+		if property == "Channels" {
+			assert.Assert(field.Kind() == reflect.Slice, "Channels key field should be slice!")
+			if buffer == string(lsb.ChannelR) ||
+				buffer == string(lsb.ChannelG) ||
+				buffer == string(lsb.ChannelB) {
+				return fmt.Errorf(
+					"Only color channels('R', 'B', 'G') are allowed "+
+						"as part of Channels LSB key! Value %s is not valid!",
+					buffer,
+				)
+			}
+
+			field.Set(reflect.Append(field, reflect.ValueOf(buffer)))
+			return nil
+		}
+
+		assert.Assert(field.Kind() == reflect.Int, "Other fields without Channels should be int!")
+
+		num, err := strconv.Atoi(buffer)
+		if err != nil {
+			return err
+		}
+
+		field.SetInt(int64(num))
 		return nil
 	}
 
-	// DEV: Was?
 	for _, char := range key {
-		if unicode.IsLetter(char) {
-			if property, ok := parsingSchema[char]; ok {
-				newField := val.FieldByName(property)
-
-				if newField.IsValid() {
-					if current != "" {
-						err := saveCurrent()
-
-						if err != nil {
-							return nil, err
-						}
-					}
-
-					current = property
-					buffer = ""
-					continue
-				} else {
-					buffer += string(char)
-				}
-			} else {
-				buffer += string(char)
-			}
-		} else {
+		if !unicode.IsLetter(char) {
 			buffer += string(char)
+			continue
 		}
+
+		nextProperty, ok := parsingSchema[char]
+		if !ok {
+			buffer += string(char)
+			continue
+		}
+
+		if err := saveCurrent(property); err != nil {
+			return nil, err
+		}
+
+		property = nextProperty
+		buffer = ""
 	}
 
-	if current != "" {
-		saveCurrent()
+	if err := saveCurrent(property); err != nil {
+		return nil, err
+	}
+
+	if len(result.Channels) < result.ChannelsPerPixel {
+		return nil, fmt.Errorf("LSB key should have more or equal Channels in"+
+			" total than used per pixel! Right now Channels"+
+			" number is %d and ChannelsPerPixel is %d",
+			len(result.Channels), result.ChannelsPerPixel,
+		)
 	}
 
 	return result, nil
@@ -141,15 +156,17 @@ func getResultImageType(imageType string) string {
 	return "image/png"
 }
 
-// TODO:: Remove imageType?
-
-// TODO: Description and rename?
-func appendSecretLengthToSecret(message []byte) []byte {
+// addSecretLength adds a length of the secret message to start
+// of secret itself by adding 4 bytes
+// Secret length used on data decoding
+func addSecretLength(message []byte) []byte {
 	secretLength := make([]byte, 4)
 	binary.LittleEndian.PutUint32(secretLength, uint32(len(message)))
 
 	return append(secretLength, message...)
 }
+
+// TODO:: Remove imageType?
 
 // TODO: Description
 func EncodeLSB(imageBytes []byte, imageType string, message []byte, key string) ([]byte, error) {
@@ -172,7 +189,7 @@ func EncodeLSB(imageBytes []byte, imageType string, message []byte, key string) 
 		Key:         *lsbKey,
 	}
 
-	encodedImage, err := lsb.Encode(img, appendSecretLengthToSecret(message), options)
+	encodedImage, err := lsb.Encode(img, addSecretLength(message), options)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +253,7 @@ func EncodeBPCS(imageBytes []byte, imageType string, message []byte) ([]byte, er
 
 	img := imageToRGBA(inputImage)
 
-	err = bpcs.EncodeBPCS(img, appendSecretLengthToSecret(message))
+	err = bpcs.EncodeBPCS(img, addSecretLength(message))
 
 	if err != nil {
 		return nil, err

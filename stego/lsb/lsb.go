@@ -6,6 +6,15 @@ import (
 	"image/color"
 )
 
+// Channel represent one color of the image in RBG format
+type Channel string
+
+const (
+	ChannelR Channel = "R"
+	ChannelG Channel = "G"
+	ChannelB Channel = "B"
+)
+
 // TODO: Description
 type Key struct {
 	// StartX set X in FROM which pixel (StartX, StartY) algorithm will work
@@ -31,7 +40,7 @@ type Key struct {
 	ChannelsPerPixel int
 
 	// Channels set which channels will be used to encode data
-	Channels []string
+	Channels []Channel
 }
 
 // TODO: Check if ChannelsPerPixel <= Channels?
@@ -69,6 +78,7 @@ func lsbBoundaries(bounds image.Rectangle, key Key) (int, int, int, int) {
 
 // calculateImageCapacity returns how many bits of information can be stored
 // in image by LSB algorithm
+// TEST: Add tests to this function
 func calculateImageCapacity(startX, startY, endX, endY int, bounds image.Rectangle, key Key) int {
 	pixelsCount := 0
 	rowCount := (endY - startY + key.GapY) / (key.GapY + 1)
@@ -89,15 +99,20 @@ func calculateImageCapacity(startX, startY, endX, endY int, bounds image.Rectang
 
 // visualDebug calculate RGB values for specific pixel to allow visible to eye
 // troubleshoot of internal algorithm
-func visualDebug(r, g, b, one uint8, ChannelsPerPixel int, currentChannel string, channelsMap map[string]bool) (uint8, uint8, uint8) {
-	if ChannelsPerPixel == 1 {
+func visualDebug(r, g, b, one uint8, key Key, currentChannel Channel) (uint8, uint8, uint8) {
+	if key.ChannelsPerPixel == 1 {
 		return 0, 0, 0
 	}
 
-	rgb := map[string]uint8{
-		"R": r,
-		"G": g,
-		"B": b,
+	channelsMap := map[Channel]bool{}
+	for _, value := range key.Channels {
+		channelsMap[value] = true
+	}
+
+	rgb := map[Channel]uint8{
+		ChannelR: r,
+		ChannelG: g,
+		ChannelB: b,
 	}
 
 	for key := range channelsMap {
@@ -114,7 +129,7 @@ func visualDebug(r, g, b, one uint8, ChannelsPerPixel int, currentChannel string
 		}
 	}
 
-	return rgb["R"], rgb["G"], rgb["B"]
+	return rgb[ChannelR], rgb[ChannelG], rgb[ChannelB]
 }
 
 // TODO: Description?
@@ -133,11 +148,6 @@ func Encode(img *image.RGBA, message []byte, options Options) (*image.RGBA, erro
 
 	counter := 0
 	channelCounter := 0
-	channelsMap := map[string]bool{}
-
-	for _, value := range key.Channels {
-		channelsMap[value] = true
-	}
 
 	for bitIndex := range totalBits {
 		byteIndex := bitIndex / 8
@@ -149,20 +159,20 @@ func Encode(img *image.RGBA, message []byte, options Options) (*image.RGBA, erro
 
 		currentChannel := key.Channels[channelCounter]
 
-		if currentChannel == "R" && r&1 != bit {
+		if currentChannel == ChannelR && r&1 != bit {
 			r ^= 1
 		}
 
-		if currentChannel == "G" && g&1 != bit {
+		if currentChannel == ChannelG && g&1 != bit {
 			g ^= 1
 		}
 
-		if currentChannel == "B" && b&1 != bit {
+		if currentChannel == ChannelB && b&1 != bit {
 			b ^= 1
 		}
 
 		if options.VisualDebug {
-			r, g, b = visualDebug(r, g, b, bit, key.ChannelsPerPixel, currentChannel, channelsMap)
+			r, g, b = visualDebug(r, g, b, bit, key, currentChannel)
 		}
 
 		img.Set(x, y, color.RGBA{r, g, b, a})
@@ -232,9 +242,9 @@ func Decode(img *image.RGBA, options Options, expectedLength int) ([]byte, error
 
 				currentChannel := key.Channels[channelCounter]
 
-				if (currentChannel == "R" && r&1 == 1) ||
-					(currentChannel == "G" && g&1 == 1) ||
-					(currentChannel == "B" && b&1 == 1) {
+				if (currentChannel == ChannelR && r&1 == 1) ||
+					(currentChannel == ChannelG && g&1 == 1) ||
+					(currentChannel == ChannelB && b&1 == 1) {
 					byteIndex := bitIndex / 8
 					shift := uint8(7 - bitIndex%8)
 
