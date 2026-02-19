@@ -3,8 +3,6 @@ package stego
 import (
 	"encoding/binary"
 	"fmt"
-	"image"
-	"image/draw"
 	"reflect"
 	"strconv"
 	"unicode"
@@ -117,12 +115,8 @@ func ParseLsbKey(key string) (*lsb.Key, error) {
 		return nil, err
 	}
 
-	if len(result.Channels) < result.ChannelsPerPixel {
-		return nil, fmt.Errorf("LSB key should have more or equal Channels in"+
-			" total than used per pixel! Right now Channels"+
-			" number is %d and ChannelsPerPixel is %d",
-			len(result.Channels), result.ChannelsPerPixel,
-		)
+	if err := lsb.CheckKeyValid(*result); err != nil {
+		return nil, err
 	}
 
 	return result, nil
@@ -138,10 +132,10 @@ func addSecretLength(message []byte) []byte {
 	return append(secretLength, message...)
 }
 
-// TODO: Description
+// EncodeLSB inject a secret message into image-container by LSB algorithm
+// Returns stego-image in lossless image type format
 func EncodeLSB(imageBytes []byte, message []byte, key string) ([]byte, error) {
 	img, imageType, err := imageio.Parse(imageBytes)
-
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +163,8 @@ func EncodeLSB(imageBytes []byte, message []byte, key string) ([]byte, error) {
 	return encodedBytes, nil
 }
 
-// TODO: Description
+// DecodeLSB inject the secret data from stego-image by LSB algorithm
+// Returns secret data in raw format
 func DecodeLSB(imageBytes []byte, key string) ([]byte, error) {
 	img, _, err := imageio.Parse(imageBytes)
 	if err != nil {
@@ -202,7 +197,8 @@ func DecodeLSB(imageBytes []byte, key string) ([]byte, error) {
 	return result[4:], nil
 }
 
-// TODO: Description
+// EncodeBPCS encodes a secret message into image-container by BPCS algorithm
+// Returns stego-image in lossless image type format
 func EncodeBPCS(imageBytes []byte, message []byte) ([]byte, error) {
 	img, imageType, err := imageio.Parse(imageBytes)
 	if err != nil {
@@ -222,7 +218,8 @@ func EncodeBPCS(imageBytes []byte, message []byte) ([]byte, error) {
 	return encodedBytes, nil
 }
 
-// TODO: Description
+// DecodeBPCS parses the secret data from stego-image by BPCS algorithm
+// Returns secret data in raw format
 func DecodeBPCS(imageBytes []byte) ([]byte, error) {
 	img, _, err := imageio.Parse(imageBytes)
 	if err != nil {

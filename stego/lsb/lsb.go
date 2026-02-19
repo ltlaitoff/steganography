@@ -43,8 +43,6 @@ type Key struct {
 	Channels []Channel
 }
 
-// TODO: Check if ChannelsPerPixel <= Channels?
-
 // Options represent additional settings for LSB encoding and decoding
 type Options struct {
 	// VisualDebug, if enabled, then encoding will produce visible to eye result
@@ -132,12 +130,29 @@ func visualDebug(r, g, b, one uint8, key Key, currentChannel Channel) (uint8, ui
 	return rgb[ChannelR], rgb[ChannelG], rgb[ChannelB]
 }
 
+// CheckKeyValid inspect the key on any kind of errors
+func CheckKeyValid(key Key) error {
+	if len(key.Channels) < key.ChannelsPerPixel {
+		return fmt.Errorf("LSB key should have more or equal Channels in"+
+			" total than used per pixel! Right now Channels"+
+			" number is %d and ChannelsPerPixel is %d",
+			len(key.Channels), key.ChannelsPerPixel,
+		)
+	}
+
+	return nil
+}
+
 // TODO: Description?
 // PERF: Encoding are too slow with big images w/ big secret messages
 func Encode(img *image.RGBA, message []byte, options Options) (*image.RGBA, error) {
 	bounds := img.Bounds()
 	key := options.Key
 	x, y, endX, endY := lsbBoundaries(bounds, key)
+
+	if err := CheckKeyValid(key); err != nil {
+		return nil, err
+	}
 
 	totalBits := len(message) * 8
 	capacityBits := calculateImageCapacity(x, y, endX, endY, bounds, key)
@@ -216,6 +231,10 @@ func Decode(img *image.RGBA, options Options, expectedLength int) ([]byte, error
 	bounds := img.Bounds()
 	key := options.Key
 	startX, startY, endX, endY := lsbBoundaries(bounds, key)
+
+	if err := CheckKeyValid(key); err != nil {
+		return nil, err
+	}
 
 	secret := make([]byte, expectedLength)
 	bitIndex := 0
