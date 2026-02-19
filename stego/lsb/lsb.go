@@ -46,20 +46,6 @@ type Options struct {
 	Key Key
 }
 
-// bytesToBitsString transforms array of bytes into bits string of 0 and 1's
-// DEV: Is there are another solution?
-// Q: What if insteal of doing this I will save a bitIndex and calculate
-// shift and after message[byteIndex] >> shift? As it is implement in BPCS
-func bytesToBitsString(bytes []byte) string {
-	bits := ""
-
-	for _, byte := range bytes {
-		bits += fmt.Sprintf("%08b", byte)
-	}
-
-	return bits
-}
-
 // TODO: Add some flag to disable if text will fit?
 // Q: What if user will set EndX to 0?
 // Should I dissallow that?
@@ -138,52 +124,45 @@ func Encode(img *image.RGBA, message []byte, options Options) (*image.RGBA, erro
 	key := options.Key
 	x, y, endX, endY := lsbBoundaries(bounds, key)
 
-	secret := bytesToBitsString(message)
-
+	totalBits := len(message) * 8
 	capacityBits := calculateImageCapacity(x, y, endX, endY, bounds, key)
-	if len(secret) > capacityBits {
-		return nil, fmt.Errorf("Insufficient capacity: need %d bits, have %d", len(secret), capacityBits)
+
+	if totalBits > capacityBits {
+		return nil, fmt.Errorf("Insufficient capacity: need %d bits, have %d", totalBits, capacityBits)
 	}
 
 	counter := 0
 	channelCounter := 0
-
 	channelsMap := map[string]bool{}
 
 	for _, value := range key.Channels {
 		channelsMap[value] = true
 	}
 
-	for _, char := range secret {
-		one := uint8(0)
-
-		if char == '1' {
-			one = 1
-		}
+	for bitIndex := range totalBits {
+		byteIndex := bitIndex / 8
+		shift := uint8(7 - bitIndex%8)
+		bit := (message[byteIndex] >> shift) & 1
 
 		cr, cg, cb, ca := img.At(x, y).RGBA()
-
-		r := uint8(cr >> 8)
-		g := uint8(cg >> 8)
-		b := uint8(cb >> 8)
-		a := uint8(ca >> 8)
+		r, g, b, a := uint8(cr>>8), uint8(cg>>8), uint8(cb>>8), uint8(ca>>8)
 
 		currentChannel := key.Channels[channelCounter]
 
-		if currentChannel == "R" && r&1 != one {
+		if currentChannel == "R" && r&1 != bit {
 			r ^= 1
 		}
 
-		if currentChannel == "G" && g&1 != one {
+		if currentChannel == "G" && g&1 != bit {
 			g ^= 1
 		}
 
-		if currentChannel == "B" && b&1 != one {
+		if currentChannel == "B" && b&1 != bit {
 			b ^= 1
 		}
 
 		if options.VisualDebug {
-			r, g, b = visualDebug(r, g, b, one, key.ChannelsPerPixel, currentChannel, channelsMap)
+			r, g, b = visualDebug(r, g, b, bit, key.ChannelsPerPixel, currentChannel, channelsMap)
 		}
 
 		img.Set(x, y, color.RGBA{r, g, b, a})
@@ -221,24 +200,15 @@ func Encode(img *image.RGBA, message []byte, options Options) (*image.RGBA, erro
 }
 
 // TODO: Description
-func Decode(img *image.RGBA, options Options, length int) ([]byte, error) {
+func Decode(img *image.RGBA, options Options, expectedLength int) ([]byte, error) {
+	totalBits := expectedLength * 8
+
 	bounds := img.Bounds()
 	key := options.Key
 	startX, startY, endX, endY := lsbBoundaries(bounds, key)
 
-	data := make([]byte, 0)
-	var newByte byte = 0
-
-	i := 7
-
-	addByteToData := func() {
-		i--
-		if i < 0 {
-			data = append(data, newByte)
-			i = 7
-			newByte = 0
-		}
-	}
+	secret := make([]byte, expectedLength)
+	bitIndex := 0
 
 	channelCounter := 0
 
@@ -256,32 +226,22 @@ func Decode(img *image.RGBA, options Options, length int) ([]byte, error) {
 			b := uint8(cb >> 8)
 
 			for range key.ChannelsPerPixel {
+				if bitIndex >= totalBits {
+					return secret, nil
+				}
+
 				currentChannel := key.Channels[channelCounter]
 
-				if currentChannel == "R" {
-					if r&1 == 1 {
-						newByte = newByte | (1 << i)
-					}
+				if (currentChannel == "R" && r&1 == 1) ||
+					(currentChannel == "G" && g&1 == 1) ||
+					(currentChannel == "B" && b&1 == 1) {
+					byteIndex := bitIndex / 8
+					shift := uint8(7 - bitIndex%8)
 
-					addByteToData()
+					secret[byteIndex] |= 1 << shift
 				}
 
-				if currentChannel == "G" {
-					if g&1 == 1 {
-						newByte = newByte | (1 << i)
-					}
-
-					addByteToData()
-				}
-
-				if currentChannel == "B" {
-					if b&1 == 1 {
-						newByte = newByte | (1 << i)
-					}
-
-					addByteToData()
-				}
-
+				bitIndex++
 				channelCounter++
 				if channelCounter >= len(key.Channels) {
 					channelCounter = 0
@@ -291,12 +251,8 @@ func Decode(img *image.RGBA, options Options, length int) ([]byte, error) {
 			if y+key.GapY >= endY && x >= endX {
 				break
 			}
-
-			if len(data) >= length {
-				return data, nil
-			}
 		}
 	}
 
-	return data, nil
+	return secret, nil
 }

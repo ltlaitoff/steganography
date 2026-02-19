@@ -45,7 +45,7 @@ func decodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 
 	return js.ValueOf(map[string]any{
 		"ok":   true,
-		"data": result,
+		"data": GoToJsBytes(result),
 	})
 }
 
@@ -82,7 +82,7 @@ func decodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
 
 	return js.ValueOf(map[string]any{
 		"ok":   true,
-		"data": result,
+		"data": GoToJsBytes(result),
 	})
 }
 

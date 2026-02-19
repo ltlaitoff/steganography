@@ -186,12 +186,12 @@ func EncodeLSB(imageBytes []byte, imageType string, message []byte, key string) 
 }
 
 // TODO: Description
-func DecodeLSB(imageBytes []byte, imageType string, key string) (string, error) {
+func DecodeLSB(imageBytes []byte, imageType string, key string) ([]byte, error) {
 	assert.Assert(imageType != "", "Image type should have value")
 	inputImage, err := imageio.ParseImage(imageBytes, imageType)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	img := imageToRGBA(inputImage)
@@ -199,7 +199,7 @@ func DecodeLSB(imageBytes []byte, imageType string, key string) (string, error) 
 	lsbKey, err := ParseLsbKey(key)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	options := lsb.Options{
@@ -210,7 +210,7 @@ func DecodeLSB(imageBytes []byte, imageType string, key string) (string, error) 
 	secretLengthString, err := lsb.Decode(img, options, 4)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	secretLength := binary.LittleEndian.Uint32(secretLengthString)
@@ -218,10 +218,10 @@ func DecodeLSB(imageBytes []byte, imageType string, key string) (string, error) 
 	result, err := lsb.Decode(img, options, int(4+secretLength))
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return string(result[4:]), nil
+	return result[4:], nil
 }
 
 // TODO: Description
@@ -252,12 +252,12 @@ func EncodeBPCS(imageBytes []byte, imageType string, message []byte) ([]byte, er
 }
 
 // TODO: Description
-func DecodeBPCS(imageBytes []byte, imageType string) (string, error) {
+func DecodeBPCS(imageBytes []byte, imageType string) ([]byte, error) {
 	assert.Assert(imageType != "", "Image type should have value")
 	inputImage, err := imageio.ParseImage(imageBytes, imageType)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	img := imageToRGBA(inputImage)
@@ -267,5 +267,5 @@ func DecodeBPCS(imageBytes []byte, imageType string) (string, error) {
 
 	result := bpcs.DecodeBPCS(img, int(4+secretLength))
 
-	return string(result[4:]), nil
+	return result[4:], nil
 }
