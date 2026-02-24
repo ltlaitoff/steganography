@@ -77,6 +77,7 @@ interface LSBKey {
 	GapY: number
 	ChannelsPerPixel: number
 	Channels: string[]
+	IgnoreCapacity: boolean
 }
 
 type LSBKeyParams = keyof LSBKey

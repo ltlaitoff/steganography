@@ -43,6 +43,7 @@ func ParseLsbKey(key string) (*lsb.Key, error) {
 		'V': "GapY",
 		'P': "ChannelsPerPixel",
 		'C': "Channels",
+		'I': "IgnoreCapacity",
 	}
 
 	result := &lsb.Key{}
@@ -77,6 +78,14 @@ func ParseLsbKey(key string) (*lsb.Key, error) {
 			}
 
 			field.Set(reflect.Append(field, reflect.ValueOf(buffer)))
+			return nil
+		}
+
+		if property == "IgnoreCapacity" {
+			fmt.Println("[DEBUG] IgnoreCapacity", property, buffer, key)
+			assert.Assert(field.Kind() == reflect.Bool, "IgnoreCapacity key field should be bool!")
+
+			field.SetBool(buffer == "1")
 			return nil
 		}
 

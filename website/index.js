@@ -7,7 +7,8 @@
 const LSB_KEY_PARAMS = [
 	'StartX', 'StartY', 'EndX',
 	'EndY', 'GapX', 'GapY',
-	'ChannelsPerPixel', 'Channels'
+	'ChannelsPerPixel', 'Channels',
+	"IgnoreCapacity"
 ]
 
 // prettier-ignore
@@ -19,7 +20,8 @@ const LSB_KEY_PARAMS = [
 const LSB_KEY_PARSING_SCHEMA = {
 	StartX: 'S', StartY: 'T', EndX: 'E',
 	EndY: 'N', GapX: 'H', GapY: 'V',
-	ChannelsPerPixel: 'P', Channels: 'C'
+	ChannelsPerPixel: 'P', Channels: 'C',
+	IgnoreCapacity: "I",
 }
 
 /**
@@ -182,6 +184,7 @@ const state = {
 			// to int in logic
 			// Like: 101 = RGB, R and B is enabled
 			Channels: ['R', 'G', 'B'],
+			IgnoreCapacity: false
 		},
 	},
 
@@ -295,6 +298,14 @@ function lsbKeyInputHandler(target) {
 		const value = target.value.split('')
 		state.LSB.key[target.name] = value
 
+		render()
+		return
+	}
+
+	if (target.name === "IgnoreCapacity") {
+		state.LSB.key[target.name] = target.checked
+
+		console.log("[DEBUG JS] IgnoreCapacity handles", state.LSB.key[target.name])
 		render()
 		return
 	}
@@ -666,6 +677,12 @@ function setLSBKeyFields() {
 			continue
 		}
 
+		if (key === "IgnoreCapacity") {
+			input.checked = state.LSB.key[key]
+			console.log("[DEBUG JS] IgnoreCapacity set value to input", state.LSB.key[key])
+			continue
+		}
+
 		input.value = String(state.LSB.key[key])
 	}
 }
@@ -683,13 +700,21 @@ function generateLsbKey(lsbKey) {
 	for (const param of LSB_KEY_PARAMS) {
 		if (lsbKey[param] !== undefined) {
 			// DEV: Magic string
-			if (param !== 'Channels') {
-				result += LSB_KEY_PARSING_SCHEMA[param] + lsbKey[param]
-			} else {
+
+			if (param === 'Channels') {
 				result += lsbKey[param]
 					.map(el => LSB_KEY_PARSING_SCHEMA[param] + el)
 					.join('')
+				continue
 			}
+
+			if (param === "IgnoreCapacity") {
+				const value = lsbKey[param] === true ? "1" : "0"
+				result += LSB_KEY_PARSING_SCHEMA[param] + value
+				continue
+			}
+
+			result += LSB_KEY_PARSING_SCHEMA[param] + lsbKey[param]
 		}
 	}
 

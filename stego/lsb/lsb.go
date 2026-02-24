@@ -41,6 +41,10 @@ type Key struct {
 
 	// Channels set which channels will be used to encode data
 	Channels []Channel
+
+	// IgnoreCapacity says that algorithm will ignore image maximum capacity
+	// limits and will inject as much data as we can
+	IgnoreCapacity bool
 }
 
 // Options represent additional settings for LSB encoding and decoding
@@ -155,10 +159,13 @@ func Encode(img *image.RGBA, message []byte, options Options) (*image.RGBA, erro
 	}
 
 	totalBits := len(message) * 8
-	capacityBits := calculateImageCapacity(x, y, endX, endY, bounds, key)
 
-	if totalBits > capacityBits {
-		return nil, fmt.Errorf("Insufficient capacity: need %d bits, have %d", totalBits, capacityBits)
+	if !key.IgnoreCapacity {
+		capacityBits := calculateImageCapacity(x, y, endX, endY, bounds, key)
+
+		if totalBits > capacityBits {
+			return nil, fmt.Errorf("Insufficient capacity: need %d bits, have %d", totalBits, capacityBits)
+		}
 	}
 
 	counter := 0
@@ -236,9 +243,15 @@ func Decode(img *image.RGBA, options Options, expectedLength int) ([]byte, error
 		return nil, err
 	}
 
-	secret := make([]byte, expectedLength)
-	bitIndex := 0
+	secretLength := expectedLength
 
+	if key.IgnoreCapacity {
+		capacityBits := calculateImageCapacity(startX, startY, endX, endY, bounds, key)
+		secretLength = capacityBits / 8
+	}
+
+	secret := make([]byte, secretLength)
+	bitIndex := 0
 	channelCounter := 0
 
 	for y := startY; y < endY; y += 1 + key.GapY {
