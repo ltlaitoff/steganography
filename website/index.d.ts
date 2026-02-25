@@ -44,26 +44,23 @@ interface Config {
 		}
 	}
 
+	SECRET: {
+		asFileCheckbox: ElementInfo<HTMLInputElement>
+		messageInputBlock: ElementInfo<HTMLLabelElement>
+		fileInputBlock: ElementInfo<HTMLLabelElement>
+		messageInput: ElementInfo<HTMLInputElement>
+		fileInput: ElementInfo<HTMLInputElement>
+		messageOutput: ElementInfo<HTMLInputElement>
+		fileOutputButton: ElementInfo<HTMLButtonElement>
+		messageOutputBlock: ElementInfo<HTMLLabelElement>
+		fileOutputButtonBlock: ElementInfo<HTMLDivElement>
+	}
+
 	ids: {
 		DEBUG: ElementInfo<HTMLInputElement>
-		SHARED: {
-			secretAsFileCheckbox: ElementInfo<HTMLInputElement>
-		}
 		LSB: {
 			keyInputBlock: ElementInfo<HTMLDivElement>
 			keyInputOutput: ElementInfo<HTMLInputElement>
-		}
-		ENCODE: {
-			secretMessageInputBlock: ElementInfo<HTMLLabelElement>
-			secretFileInputBlock: ElementInfo<HTMLLabelElement>
-			secretMessageInput: ElementInfo<HTMLInputElement>
-			secretFileInput: ElementInfo<HTMLInputElement>
-		}
-		DECODE: {
-			secretMessageOutput: ElementInfo<HTMLInputElement>
-			secretFileOutputButton: ElementInfo<HTMLButtonElement>
-			secretMessageOutputBlock: ElementInfo<HTMLLabelElement>
-			secretFileOutputButtonBlock: ElementInfo<HTMLDivElement>
 		}
 	}
 }

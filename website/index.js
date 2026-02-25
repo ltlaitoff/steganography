@@ -73,26 +73,22 @@ const config = {
 		}
 	},
 
+	SECRET: {
+		asFileCheckbox: { id: 'secret-as-file', type: HTMLInputElement },
+		messageInput: { id: 'encode-secret-message-input', type: HTMLInputElement },
+		fileInput: { id: 'encode-secret-file-input', type: HTMLInputElement },
+		messageInputBlock: { id: 'encode-secret-message-input-block', type: HTMLLabelElement },
+		fileInputBlock: { id: 'encode-secret-file-input-block', type: HTMLLabelElement },
+		messageOutputBlock: { id: 'decode-secret-message-output-block', type: HTMLLabelElement },
+		fileOutputButtonBlock: { id: 'decode-secret-file-output-button-block', type: HTMLDivElement },
+		messageOutput: { id: 'decode-secret-message-output', type: HTMLInputElement },
+		fileOutputButton: { id: 'decode-secret-file-output-button', type: HTMLButtonElement }
+	},
 	// prettier-ignore
 	// DEV: If we remove LSB and DEBUG it's all about secret
 	ids: {
 		DEBUG: { id: 'debug', type: HTMLInputElement },
 
-		SHARED: {
-			secretAsFileCheckbox: { id: 'secret-as-file', type: HTMLInputElement }
-		},
-		ENCODE: {
-			secretMessageInput: { id: 'encode-secret-message-input', type: HTMLInputElement },
-			secretFileInput: { id: 'encode-secret-file-input', type: HTMLInputElement },
-			secretMessageInputBlock: { id: 'encode-secret-message-input-block', type: HTMLLabelElement },
-			secretFileInputBlock: { id: 'encode-secret-file-input-block', type: HTMLLabelElement },
-		},
-		DECODE: {
-			secretMessageOutputBlock: { id: 'decode-secret-message-output-block', type: HTMLLabelElement },
-			secretFileOutputButtonBlock: { id: 'decode-secret-file-output-button-block', type: HTMLDivElement },
-			secretMessageOutput: { id: 'decode-secret-message-output', type: HTMLInputElement },
-			secretFileOutputButton: { id: 'decode-secret-file-output-button', type: HTMLButtonElement }
-		},
 		LSB: {
 			keyInputBlock: { id: "lsb-secret-key-block", type: HTMLDivElement },
 			keyInputOutput: { id: 'lsb-secret-key', type: HTMLInputElement },
@@ -128,19 +124,19 @@ const UI = {
 
 // prettier-ignore
 // DEV: Rename to SECRET and remove all this secret prefixes?
-const SHARED = {
-	secretAsFileCheckbox: loadElement(config.ids.SHARED.secretAsFileCheckbox),
+const SECRET = {
+	secretAsFileCheckbox: loadElement(config.SECRET.asFileCheckbox),
 	encode: {
-		secretMessageInput: loadElement(config.ids.ENCODE.secretMessageInput),
-		secretFileInput: loadElement(config.ids.ENCODE.secretFileInput),
-		secretMessageInputBlock: loadElement(config.ids.ENCODE.secretMessageInputBlock),
-		secretFileInputBlock: loadElement(config.ids.ENCODE.secretFileInputBlock)
+		secretMessageInput: loadElement(config.SECRET.messageInput),
+		secretFileInput: loadElement(config.SECRET.fileInput),
+		secretMessageInputBlock: loadElement(config.SECRET.messageInputBlock),
+		secretFileInputBlock: loadElement(config.SECRET.fileInputBlock)
 	},
 	decode: {
-		secretMessageOutput: loadElement(config.ids.DECODE.secretMessageOutput),
-		secretFileOutputButton: loadElement(config.ids.DECODE.secretFileOutputButton),
-		secretMessageOutputBlock: loadElement(config.ids.DECODE.secretMessageOutputBlock),
-		secretFileOutputButtonBlock: loadElement(config.ids.DECODE.secretFileOutputButtonBlock)
+		secretMessageOutput: loadElement(config.SECRET.messageOutput),
+		secretFileOutputButton: loadElement(config.SECRET.fileOutputButton),
+		secretMessageOutputBlock: loadElement(config.SECRET.messageOutputBlock),
+		secretFileOutputButtonBlock: loadElement(config.SECRET.fileOutputButtonBlock)
 	}
 }
 
@@ -345,7 +341,7 @@ function secretFileOutputHandler() {
 
 /**
  * TODO: Description
- * @param {ConstuctorReturnType<typeof config.ids.ENCODE.secretFileInput.type>} target
+ * @param {ConstuctorReturnType<typeof config.SECRET.fileInput.type>} target
  */
 function secretFileInputHandler(target) {
 	assert(target.files !== null, 'LSB secret file input should have files')
@@ -358,7 +354,7 @@ function secretFileInputHandler(target) {
 
 /**
  * TODO: Description
- * @param {ConstuctorReturnType<typeof config.ids.SHARED.secretAsFileCheckbox.type>} target
+ * @param {ConstuctorReturnType<typeof config.SECRET.asFileCheckbox.type>} target
  */
 function secretMessageAsFileHandler(target) {
 	state.secretAsFile = target.checked
@@ -406,7 +402,7 @@ function originalImageChangeHandler(target) {
 
 /**
  * TODO: Description
- * @param {ConstuctorReturnType<typeof config.ids.ENCODE.secretMessageInput.type>} target
+ * @param {ConstuctorReturnType<typeof config.SECRET.messageInput.type>} target
  */
 function secretMessageInputHandler(target) {
 	state.secretMessage = target.value
@@ -420,13 +416,13 @@ function initEventHandlers() {
 	typedEventListener(DEBUG, 'change', config.ids.DEBUG.type, debugChangeHandler)
 	typedEventListener(GLOBAL.originalImageInput, 'change', config.globalIds.originalImageInput.type, originalImageChangeHandler)
 	typedEventListener(UI.swapButton, 'click', config.UIids.swapButton.type, swapImagesHandler)
-	typedEventListener(SHARED.secretAsFileCheckbox, "change", config.ids.SHARED.secretAsFileCheckbox.type, secretMessageAsFileHandler)
-	typedEventListener(SHARED.encode.secretFileInput, "change", config.ids.ENCODE.secretFileInput.type, secretFileInputHandler)
-	typedEventListener(SHARED.decode.secretFileOutputButton, "click", config.ids.DECODE.secretFileOutputButton.type, secretFileOutputHandler)
+	typedEventListener(SECRET.secretAsFileCheckbox, "change", config.SECRET.asFileCheckbox.type, secretMessageAsFileHandler)
+	typedEventListener(SECRET.encode.secretFileInput, "change", config.SECRET.fileInput.type, secretFileInputHandler)
+	typedEventListener(SECRET.decode.secretFileOutputButton, "click", config.SECRET.fileOutputButton.type, secretFileOutputHandler)
 	typedEventListener(LSB.keyInputBlock, 'change', HTMLInputElement, lsbKeyInputHandler)
 	typedEventListener(GLOBAL.submitButton, 'click', HTMLButtonElement, submitHandler)
 	typedEventListener(UI.ERROR.button, 'click', config.UIids.ERROR.button.type, resetError)
-	typedEventListener(SHARED.encode.secretMessageInput, 'change', config.ids.ENCODE.secretMessageInput.type, secretMessageInputHandler)
+	typedEventListener(SECRET.encode.secretMessageInput, 'change', config.SECRET.messageInput.type, secretMessageInputHandler)
 	typedEventListener(UI.menu.base, 'change', HTMLInputElement, menuChangeHandler)
 
 	window.addEventListener('error', e => globalErrorHandler(e.error))
@@ -528,7 +524,7 @@ async function submitHandler() {
 		if (state.secretAsFile) {
 			state.decodedSecretFile = new File([content], `result`)
 		} else {
-			SHARED.decode.secretMessageOutput.value = content.toString()
+			SECRET.decode.secretMessageOutput.value = content.toString()
 		}
 	}
 
@@ -629,24 +625,24 @@ function render() {
 		GLOBAL.resultImagePreview.src = URL.createObjectURL(state.resultImageFile)
 	}
 
-	SHARED.secretAsFileCheckbox.checked = state.secretAsFile
+	SECRET.secretAsFileCheckbox.checked = state.secretAsFile
 
 	if (state.secretAsFile) {
-		SHARED.encode.secretMessageInputBlock.classList.add('hidden')
-		SHARED.decode.secretMessageOutputBlock.classList.add('hidden')
-		SHARED.encode.secretFileInputBlock.classList.remove('hidden')
-		SHARED.decode.secretFileOutputButtonBlock.classList.remove('hidden')
+		SECRET.encode.secretMessageInputBlock.classList.add('hidden')
+		SECRET.decode.secretMessageOutputBlock.classList.add('hidden')
+		SECRET.encode.secretFileInputBlock.classList.remove('hidden')
+		SECRET.decode.secretFileOutputButtonBlock.classList.remove('hidden')
 	} else {
-		SHARED.encode.secretMessageInputBlock.classList.remove('hidden')
-		SHARED.decode.secretMessageOutputBlock.classList.remove('hidden')
-		SHARED.encode.secretFileInputBlock.classList.add('hidden')
-		SHARED.decode.secretFileOutputButtonBlock.classList.add('hidden')
+		SECRET.encode.secretMessageInputBlock.classList.remove('hidden')
+		SECRET.decode.secretMessageOutputBlock.classList.remove('hidden')
+		SECRET.encode.secretFileInputBlock.classList.add('hidden')
+		SECRET.decode.secretFileOutputButtonBlock.classList.add('hidden')
 	}
 
 	if (state.decodedSecretFile) {
-		SHARED.decode.secretFileOutputButton.disabled = false
+		SECRET.decode.secretFileOutputButton.disabled = false
 	} else {
-		SHARED.decode.secretFileOutputButton.disabled = true
+		SECRET.decode.secretFileOutputButton.disabled = true
 	}
 
 	if (state.errorMessage !== '') {
