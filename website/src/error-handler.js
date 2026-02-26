@@ -2,17 +2,19 @@ import { AssertionError, UserError } from './shared/errors.js'
 import { loadElement } from './shared/shared.js'
 
 /**
+ * Error handler has root element `#error` which can be used in future
  *
+ * Right not it's not used because we automatically hide this element via
+ * CSS if message is empty
  */
-const block = loadElement({ id: 'error', type: HTMLDivElement })
 
 /**
- *
+ * Message which will be showed to user
  */
 const message = loadElement({ id: 'error-message', type: HTMLDivElement })
 
 /**
- *
+ * Allows user to close the block
  */
 const button = loadElement({ id: 'error-close', type: HTMLButtonElement })
 
@@ -46,20 +48,21 @@ function errorHandler(err) {
 }
 
 /**
- * Reset error in state
- *
- * Side-effect: Change in DOM
+ * Remove the error
  */
 function resetError() {
 	showError('')
 }
 
 /**
+ * Show the error to the user
+ *
+ * If message is empty then error will be hidden from user via CSS
+ *
  * @param {string} errorMessage
  */
 function showError(errorMessage) {
 	message.textContent = errorMessage
-	block.dataset['active'] = errorMessage !== '' ? 'true' : 'false'
 }
 
 button.addEventListener('click', resetError)
