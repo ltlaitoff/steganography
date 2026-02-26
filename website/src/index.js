@@ -1,3 +1,11 @@
+import { assert, userAssert, UserError } from './shared/errors.js'
+import {
+	loadElement,
+	typedEventListener,
+	fileToByteArray,
+} from './shared/shared.js'
+import * as ErrorHandler from './error-handler.js'
+
 // prettier-ignore
 /**
  * Set of LSB key fields
@@ -65,24 +73,36 @@ const config = {
 		encodeBlock: { id: "encode", type: HTMLDivElement },
 		decodeBlock: { id: "decode", type: HTMLDivElement },
 		swapButton: { id: "swap", type: HTMLButtonElement },
-
-		ERROR: {
-			block: { id: "error", type: HTMLDivElement },
-			message: { id: "error-message", type: HTMLDivElement },
-			button: { id: "error-close", type: HTMLButtonElement },
-		}
 	},
 
 	SECRET: {
 		asFileCheckbox: { id: 'secret-as-file', type: HTMLInputElement },
 		messageInput: { id: 'encode-secret-message-input', type: HTMLInputElement },
 		fileInput: { id: 'encode-secret-file-input', type: HTMLInputElement },
-		messageInputBlock: { id: 'encode-secret-message-input-block', type: HTMLLabelElement },
-		fileInputBlock: { id: 'encode-secret-file-input-block', type: HTMLLabelElement },
-		messageOutputBlock: { id: 'decode-secret-message-output-block', type: HTMLLabelElement },
-		fileOutputButtonBlock: { id: 'decode-secret-file-output-button-block', type: HTMLDivElement },
-		messageOutput: { id: 'decode-secret-message-output', type: HTMLInputElement },
-		fileOutputButton: { id: 'decode-secret-file-output-button', type: HTMLButtonElement }
+		messageInputBlock: {
+			id: 'encode-secret-message-input-block',
+			type: HTMLLabelElement,
+		},
+		fileInputBlock: {
+			id: 'encode-secret-file-input-block',
+			type: HTMLLabelElement,
+		},
+		messageOutputBlock: {
+			id: 'decode-secret-message-output-block',
+			type: HTMLLabelElement,
+		},
+		fileOutputButtonBlock: {
+			id: 'decode-secret-file-output-button-block',
+			type: HTMLDivElement,
+		},
+		messageOutput: {
+			id: 'decode-secret-message-output',
+			type: HTMLInputElement,
+		},
+		fileOutputButton: {
+			id: 'decode-secret-file-output-button',
+			type: HTMLButtonElement,
+		},
 	},
 	// prettier-ignore
 	// DEV: If we remove LSB and DEBUG it's all about secret
@@ -115,11 +135,6 @@ const UI = {
 	encodeBlock: loadElement(config.UIids.encodeBlock),
 	decodeBlock: loadElement(config.UIids.decodeBlock),
 	swapButton: loadElement(config.UIids.swapButton),
-	ERROR: {
-		block: loadElement(config.UIids.ERROR.block),
-		message: loadElement(config.UIids.ERROR.message),
-		button: loadElement(config.UIids.ERROR.button),
-	},
 }
 
 // prettier-ignore
@@ -180,11 +195,9 @@ const state = {
 			// to int in logic
 			// Like: 101 = RGB, R and B is enabled
 			Channels: ['R', 'G', 'B'],
-			IgnoreCapacity: false
+			IgnoreCapacity: false,
 		},
 	},
-
-	errorMessage: '',
 }
 
 // DEV: Re-check all assert messages!
@@ -259,16 +272,6 @@ GLOBAL.originalImageInputDropZone.addEventListener('drop', e => {
 })
 
 /**
- * Reset error in state
- *
- * Side-effect: Change in DOM
- */
-function resetError() {
-	state.errorMessage = ''
-	render()
-}
-
-/**
  * TODO: Description
  * @param {HTMLInputElement} target
  */
@@ -298,10 +301,10 @@ function lsbKeyInputHandler(target) {
 		return
 	}
 
-	if (target.name === "IgnoreCapacity") {
+	if (target.name === 'IgnoreCapacity') {
 		state.LSB.key[target.name] = target.checked
 
-		console.log("[DEBUG JS] IgnoreCapacity handles", state.LSB.key[target.name])
+		console.log('[DEBUG JS] IgnoreCapacity handles', state.LSB.key[target.name])
 		render()
 		return
 	}
@@ -421,12 +424,8 @@ function initEventHandlers() {
 	typedEventListener(SECRET.decode.secretFileOutputButton, "click", config.SECRET.fileOutputButton.type, secretFileOutputHandler)
 	typedEventListener(LSB.keyInputBlock, 'change', HTMLInputElement, lsbKeyInputHandler)
 	typedEventListener(GLOBAL.submitButton, 'click', HTMLButtonElement, submitHandler)
-	typedEventListener(UI.ERROR.button, 'click', config.UIids.ERROR.button.type, resetError)
 	typedEventListener(SECRET.encode.secretMessageInput, 'change', config.SECRET.messageInput.type, secretMessageInputHandler)
 	typedEventListener(UI.menu.base, 'change', HTMLInputElement, menuChangeHandler)
-
-	window.addEventListener('error', e => globalErrorHandler(e.error))
-	window.addEventListener('unhandledrejection', e => globalErrorHandler(e.reason))
 }
 
 // TODO: Description
@@ -465,9 +464,7 @@ function checkGoOutput(result) {
 
 // TODO: Description
 async function submitHandler() {
-	state.errorMessage = ''
-	render()
-
+	ErrorHandler.resetError()
 	userAssert(state.originalImageFile !== undefined, 'Image is not loaded!')
 
 	const originalImage = await fileToByteArray(state.originalImageFile)
@@ -483,11 +480,7 @@ async function submitHandler() {
 		// DEV: This if/else can refactored into something better
 		if (state.activeMethod === 'LSB') {
 			content = checkGoOutput(
-				goEncodeLSB(
-					originalImage,
-					message,
-					generateLsbKey(state.LSB.key),
-				),
+				goEncodeLSB(originalImage, message, generateLsbKey(state.LSB.key)),
 			)
 		} else if (state.activeMethod === 'BPCS') {
 			content = checkGoOutput(goEncodeBPCS(originalImage, message))
@@ -510,10 +503,7 @@ async function submitHandler() {
 		// DEV: This if/else can refactored into something better
 		if (state.activeMethod === 'LSB') {
 			content = checkGoOutput(
-				goDecodeLSB(
-					originalImage,
-					generateLsbKey(state.LSB.key),
-				),
+				goDecodeLSB(originalImage, generateLsbKey(state.LSB.key)),
 			)
 		} else if (state.activeMethod === 'BPCS') {
 			content = checkGoOutput(goDecodeBPCS(originalImage))
@@ -538,13 +528,13 @@ async function submitHandler() {
 function menuChangeHandler(target) {
 	assert(
 		target.name === config.menu.name.methods ||
-		target.name === config.menu.name.operation,
+			target.name === config.menu.name.operation,
 		'Menu input name should be one of menu names',
 	)
 
 	assert(
 		config.menu.value.methods.includes(target.value) ||
-		config.menu.value.operation.includes(target.value),
+			config.menu.value.operation.includes(target.value),
 		'Menu input value should be one from menu config',
 	)
 
@@ -645,14 +635,6 @@ function render() {
 		SECRET.decode.secretFileOutputButton.disabled = true
 	}
 
-	if (state.errorMessage !== '') {
-		UI.ERROR.block.dataset['active'] = 'true'
-		UI.ERROR.message.textContent = state.errorMessage
-	} else {
-		UI.ERROR.block.dataset['active'] = 'false'
-		UI.ERROR.message.textContent = state.errorMessage
-	}
-
 	LSB.keyInputOutput.value = generateLsbKey(state.LSB.key)
 	setLSBKeyFields()
 }
@@ -673,9 +655,8 @@ function setLSBKeyFields() {
 			continue
 		}
 
-		if (key === "IgnoreCapacity") {
+		if (key === 'IgnoreCapacity') {
 			input.checked = state.LSB.key[key]
-			console.log("[DEBUG JS] IgnoreCapacity set value to input", state.LSB.key[key])
 			continue
 		}
 
@@ -704,8 +685,8 @@ function generateLsbKey(lsbKey) {
 				continue
 			}
 
-			if (param === "IgnoreCapacity") {
-				const value = lsbKey[param] === true ? "1" : "0"
+			if (param === 'IgnoreCapacity') {
+				const value = lsbKey[param] === true ? '1' : '0'
 				result += LSB_KEY_PARSING_SCHEMA[param] + value
 				continue
 			}
@@ -715,139 +696,4 @@ function generateLsbKey(lsbKey) {
 	}
 
 	return result
-}
-
-/**
- * Transform File to Uint8Array
- *
- * @type {(file: File) => Promise<Uint8Array>}
- */
-async function fileToByteArray(file) {
-	return file.arrayBuffer().then(value => new Uint8Array(value))
-}
-
-/**
- * Get element from DOM tree with type-checks
- *
- * @type {<T extends HTMLElement>(elementInfo: ElementInfo<T>) => T}
- */
-function loadElement(elementInfo) {
-	const element = document.querySelector('#' + elementInfo.id)
-	assert(
-		element !== null,
-		`Element with id \"#${elementInfo.id}\" should not be null!`,
-	)
-	assert(
-		element instanceof elementInfo.type,
-		`Element with id \"#${elementInfo.id}\" should be instance of ${elementInfo.type.name}!`,
-	)
-
-	return element
-}
-
-/**
- * Wrapper on addEventListener with additional event target type check
- *
- * @type {TypedEventListener}
- */
-function typedEventListener(element, type, elementType, callback) {
-	element.addEventListener(type, e => {
-		assert(
-			e.target instanceof elementType,
-			`Event on element ${element.tagName} #${element.id} should have target` +
-			` with type ${elementType} on ${type}`,
-		)
-
-		callback(e.target, { ...e, target: e.target })
-	})
-}
-
-/**
- * Represents error when some logic error happens which should never happen
- *
- * Example: HTML element by config should have one type, but we have other
- */
-class AssertionError extends Error {
-	/**
-	 * @param {string} message
-	 */
-	constructor(message) {
-		super(message)
-		this.name = 'AssertionError'
-	}
-}
-
-/**
- * Invariant for {@link AssertionError}
- *
- * @type {Assert}
- */
-function assert(condition, message) {
-	if (!condition) {
-		throw new AssertionError(message)
-	}
-}
-
-/**
- * Represents error for operator mistakes
- *
- * Example: Function to encode data was called, but image by user was not
- * loaded yet
- */
-class UserError extends Error {
-	/**
-	 * @param {string} message
-	 */
-	constructor(message) {
-		super(message)
-		this.name = 'UserError'
-	}
-}
-
-/**
- * Invariant for {@link UserError}
- *
- * @type {Assert}
- */
-function userAssert(condition, message) {
-	if (!condition) {
-		throw new UserError(message)
-	}
-}
-
-/**
- * Project scope error handler
- *
- * Side-effects: Change state and call render
- *
- * @param {unknown} err
- */
-function globalErrorHandler(err) {
-	/**
-	 * @param {string} message
-	 */
-	function showError(message) {
-		state.errorMessage = message
-		render()
-	}
-
-	if (err instanceof AssertionError) {
-		showError(
-			'Inner application error which should never happen! Check console for more details!',
-		)
-		return
-	}
-
-	if (err instanceof UserError) {
-		showError(err.message)
-		return
-	}
-
-	if (err instanceof WebAssembly.RuntimeError) {
-		showError('Something went wrong! Please check console or try again!')
-		return
-	}
-
-	console.log('Error', err)
-	showError('Catch unknown error! Check console for more details!')
 }

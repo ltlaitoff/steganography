@@ -46,6 +46,6 @@
 		"jsx": "preserve",
 		"incremental": true
 	},
-	"includes": ["*.d.ts", "*.js"],
+	"includes": ["src/*.d.ts", "src/*.js"],
 	"exclude": ["wasm_exec.js"]
 }
