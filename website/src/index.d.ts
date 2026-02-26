@@ -33,7 +33,6 @@ interface Config {
 			base: ElementInfo<HTMLDivElement>
 			methods: ElementInfo<HTMLDivElement>
 		}
-		lsbBlock: ElementInfo<HTMLDivElement>
 		encodeBlock: ElementInfo<HTMLDivElement>
 		decodeBlock: ElementInfo<HTMLDivElement>
 		swapButton: ElementInfo<HTMLButtonElement>
@@ -53,10 +52,6 @@ interface Config {
 
 	ids: {
 		DEBUG: ElementInfo<HTMLInputElement>
-		LSB: {
-			keyInputBlock: ElementInfo<HTMLDivElement>
-			keyInputOutput: ElementInfo<HTMLInputElement>
-		}
 	}
 }
 
@@ -88,10 +83,6 @@ interface State {
 
 	encodeSecretFile: File | undefined
 	decodedSecretFile: File | undefined
-
-	LSB: {
-		key: LSBKey
-	}
 }
 
 type Assert = (condition: boolean, message: string) => asserts condition

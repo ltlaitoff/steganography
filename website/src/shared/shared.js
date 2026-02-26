@@ -1,4 +1,4 @@
-import { assert } from './errors.js'
+import { assert, UserError } from './errors.js'
 
 /**
  * Transform File to Uint8Array
@@ -43,4 +43,21 @@ export function typedEventListener(element, type, elementType, callback) {
 
 		callback(e.target, { ...e, target: e.target })
 	})
+}
+
+/**
+ * TODO: Description
+ * @type {CheckGoOutput}
+ */
+export function checkGoOutput(result) {
+	assert(
+		result !== undefined,
+		'Golang function result should be always defined',
+	)
+
+	if (result.ok === false) {
+		throw new UserError(`Error! ${result.message}`)
+	}
+
+	return result.data
 }

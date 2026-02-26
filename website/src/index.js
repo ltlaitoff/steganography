@@ -1,36 +1,12 @@
-import { assert, userAssert, UserError } from './shared/errors.js'
+import { assert, userAssert } from './shared/errors.js'
 import {
 	loadElement,
 	typedEventListener,
 	fileToByteArray,
+	checkGoOutput,
 } from './shared/shared.js'
 import * as ErrorHandler from './error-handler.js'
-
-// prettier-ignore
-/**
- * Set of LSB key fields
- *
- * @type LSBKeyParams[]
- */
-const LSB_KEY_PARAMS = [
-	'StartX', 'StartY', 'EndX',
-	'EndY', 'GapX', 'GapY',
-	'ChannelsPerPixel', 'Channels',
-	"IgnoreCapacity"
-]
-
-// prettier-ignore
-/**
- * @type Record<LSBKeyParams, string>
- *
- * DEV: What if we merge LSB_KEY_PARAMS and this parsing schema into one?
- */
-const LSB_KEY_PARSING_SCHEMA = {
-	StartX: 'S', StartY: 'T', EndX: 'E',
-	EndY: 'N', GapX: 'H', GapY: 'V',
-	ChannelsPerPixel: 'P', Channels: 'C',
-	IgnoreCapacity: "I",
-}
+import * as LSB from './lsb.js'
 
 /**
  * @type {Config}
@@ -69,7 +45,6 @@ const config = {
 			base: { id: "menu", type: HTMLDivElement },
 			methods: { id: "menu-methods", type: HTMLDivElement },
 		},
-		lsbBlock: { id: "lsb", type: HTMLDivElement },
 		encodeBlock: { id: "encode", type: HTMLDivElement },
 		decodeBlock: { id: "decode", type: HTMLDivElement },
 		swapButton: { id: "swap", type: HTMLButtonElement },
@@ -108,11 +83,6 @@ const config = {
 	// DEV: If we remove LSB and DEBUG it's all about secret
 	ids: {
 		DEBUG: { id: 'debug', type: HTMLInputElement },
-
-		LSB: {
-			keyInputBlock: { id: "lsb-secret-key-block", type: HTMLDivElement },
-			keyInputOutput: { id: 'lsb-secret-key', type: HTMLInputElement },
-		},
 	},
 }
 
@@ -131,7 +101,6 @@ const UI = {
 		base: loadElement(config.UIids.menu.base),
 		methods: loadElement(config.UIids.menu.methods),
 	},
-	lsbBlock: loadElement(config.UIids.lsbBlock),
 	encodeBlock: loadElement(config.UIids.encodeBlock),
 	decodeBlock: loadElement(config.UIids.decodeBlock),
 	swapButton: loadElement(config.UIids.swapButton),
@@ -155,12 +124,6 @@ const SECRET = {
 	}
 }
 
-// prettier-ignore
-const LSB = {
-	keyInputBlock: loadElement(config.ids.LSB.keyInputBlock),
-	keyInputOutput: loadElement(config.ids.LSB.keyInputOutput),
-}
-
 const DEBUG = loadElement(config.ids.DEBUG)
 
 /**
@@ -179,25 +142,6 @@ const state = {
 	secretMessage: '',
 	encodeSecretFile: undefined,
 	decodedSecretFile: undefined,
-
-	LSB: {
-		key: {
-			StartX: 0,
-			StartY: 0,
-			EndX: 0,
-			EndY: 0,
-			GapX: 0,
-			GapY: 0,
-			ChannelsPerPixel: 3,
-
-			// DEV: All values are numbers and only this are array
-			// It will be better to change it from input to checkboxes in UI and
-			// to int in logic
-			// Like: 101 = RGB, R and B is enabled
-			Channels: ['R', 'G', 'B'],
-			IgnoreCapacity: false,
-		},
-	},
 }
 
 // DEV: Re-check all assert messages!
@@ -270,51 +214,6 @@ GLOBAL.originalImageInputDropZone.addEventListener('drop', e => {
 	state.originalImageFile = firstFile
 	render()
 })
-
-/**
- * TODO: Description
- * @param {HTMLInputElement} target
- */
-function lsbKeyInputHandler(target) {
-	// DEV: Magic string
-	if (target.name === 'key') {
-		if (target.value === '') return
-
-		const parsedKey = checkGoOutput(goParseLSBKey(target.value))
-		state.LSB.key = parsedKey
-
-		render()
-		return
-	}
-
-	assert(
-		LSB_KEY_PARAMS.includes(target.name),
-		'Key input block input name should be one of LSB key params',
-	)
-
-	// DEV: Magic string
-	if (target.name === 'Channels') {
-		const value = target.value.split('')
-		state.LSB.key[target.name] = value
-
-		render()
-		return
-	}
-
-	if (target.name === 'IgnoreCapacity') {
-		state.LSB.key[target.name] = target.checked
-
-		console.log('[DEBUG JS] IgnoreCapacity handles', state.LSB.key[target.name])
-		render()
-		return
-	}
-
-	const value = Number(target.value)
-	assert(Number.isNaN(value) === false, 'Input number value should not be NaN!')
-
-	state.LSB.key[target.name] = value
-	render()
-}
 
 /**
  * TODO: Description
@@ -422,7 +321,6 @@ function initEventHandlers() {
 	typedEventListener(SECRET.secretAsFileCheckbox, "change", config.SECRET.asFileCheckbox.type, secretMessageAsFileHandler)
 	typedEventListener(SECRET.encode.secretFileInput, "change", config.SECRET.fileInput.type, secretFileInputHandler)
 	typedEventListener(SECRET.decode.secretFileOutputButton, "click", config.SECRET.fileOutputButton.type, secretFileOutputHandler)
-	typedEventListener(LSB.keyInputBlock, 'change', HTMLInputElement, lsbKeyInputHandler)
 	typedEventListener(GLOBAL.submitButton, 'click', HTMLButtonElement, submitHandler)
 	typedEventListener(SECRET.encode.secretMessageInput, 'change', config.SECRET.messageInput.type, secretMessageInputHandler)
 	typedEventListener(UI.menu.base, 'change', HTMLInputElement, menuChangeHandler)
@@ -445,23 +343,6 @@ async function prepareSecretMessage() {
 	return new TextEncoder().encode(state.secretMessage)
 }
 
-/**
- * TODO: Description
- * @type {CheckGoOutput}
- */
-function checkGoOutput(result) {
-	assert(
-		result !== undefined,
-		'Golang function result should be always defined',
-	)
-
-	if (result.ok === false) {
-		throw new UserError(`Error! ${result.message}`)
-	}
-
-	return result.data
-}
-
 // TODO: Description
 async function submitHandler() {
 	ErrorHandler.resetError()
@@ -479,9 +360,7 @@ async function submitHandler() {
 
 		// DEV: This if/else can refactored into something better
 		if (state.activeMethod === 'LSB') {
-			content = checkGoOutput(
-				goEncodeLSB(originalImage, message, generateLsbKey(state.LSB.key)),
-			)
+			content = LSB.encode(originalImage, message)
 		} else if (state.activeMethod === 'BPCS') {
 			content = checkGoOutput(goEncodeBPCS(originalImage, message))
 		} else {
@@ -502,9 +381,7 @@ async function submitHandler() {
 
 		// DEV: This if/else can refactored into something better
 		if (state.activeMethod === 'LSB') {
-			content = checkGoOutput(
-				goDecodeLSB(originalImage, generateLsbKey(state.LSB.key)),
-			)
+			content = LSB.decode(originalImage)
 		} else if (state.activeMethod === 'BPCS') {
 			content = checkGoOutput(goDecodeBPCS(originalImage))
 		} else {
@@ -595,9 +472,9 @@ function render() {
 	}
 
 	if (state.activeMethod === 'LSB') {
-		UI.lsbBlock.classList.remove('hidden')
+		LSB.root.classList.remove('hidden')
 	} else if (state.activeMethod === 'BPCS') {
-		UI.lsbBlock.classList.add('hidden')
+		LSB.root.classList.add('hidden')
 	}
 
 	if (state.originalImageFile) {
@@ -634,66 +511,4 @@ function render() {
 	} else {
 		SECRET.decode.secretFileOutputButton.disabled = true
 	}
-
-	LSB.keyInputOutput.value = generateLsbKey(state.LSB.key)
-	setLSBKeyFields()
-}
-
-// DEV: This function should not work like that
-// It will be better to parse all inputs first, and after use them to set values
-function setLSBKeyFields() {
-	for (const key of LSB_KEY_PARAMS) {
-		const input = LSB.keyInputBlock.querySelector(`[name=${key}]`)
-		assert(
-			input instanceof HTMLInputElement,
-			`LSB key field with name ${key} should be HTMLInputElement`,
-		)
-
-		// DEV: Magic string
-		if (key === 'Channels') {
-			input.value = state.LSB.key[key].join('')
-			continue
-		}
-
-		if (key === 'IgnoreCapacity') {
-			input.checked = state.LSB.key[key]
-			continue
-		}
-
-		input.value = String(state.LSB.key[key])
-	}
-}
-
-/**
- * Transform whole lsb key from inner/parsed represenation to encoded/string
- *
- * @param {LSBKey} lsbKey
- *
- * DEV: I'm not sure about this function...
- */
-function generateLsbKey(lsbKey) {
-	let result = ''
-
-	for (const param of LSB_KEY_PARAMS) {
-		if (lsbKey[param] !== undefined) {
-			// DEV: Magic string
-
-			if (param === 'Channels') {
-				result += lsbKey[param]
-					.map(el => LSB_KEY_PARSING_SCHEMA[param] + el)
-					.join('')
-				continue
-			}
-
-			if (param === 'IgnoreCapacity') {
-				const value = lsbKey[param] === true ? '1' : '0'
-				result += LSB_KEY_PARSING_SCHEMA[param] + value
-				continue
-			}
-
-			result += LSB_KEY_PARSING_SCHEMA[param] + lsbKey[param]
-		}
-	}
-
-	return result
 }
