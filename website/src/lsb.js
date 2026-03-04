@@ -2,43 +2,35 @@ import { assert } from './shared/errors.js'
 import {
 	checkGoOutput,
 	loadElement,
+	loadInputElement,
 	typedEventListener,
 } from './shared/shared.js'
 
-// prettier-ignore
 /**
- * Set of LSB key fields
+ * Inner LSB key structure
  *
- * @type LSBKeyParams[]
- */
-const KEY_PARAMS = [
-	'StartX', 'StartY', 'EndX', 'EndY', 'GapX', 'GapY',
-	'ChannelsPerPixel', 'Channels', "IgnoreCapacity"
-]
-
-// prettier-ignore
-/**
- * @type Record<LSBKeyParams, string>
+ * @typedef {Object} Key
+ * @property {number} StartX
+ * @property {number} StartY - Some description
+ * @property {number} EndX
+ * @property {number} EndY
+ * @property {number} GapX
+ * @property {number} GapY
+ * @property {number} ChannelsPerPixel
+ * @property {Object} Channels
+ * @property {boolean} Channels.R
+ * @property {boolean} Channels.G
+ * @property {boolean} Channels.B
+ * @property {boolean} IgnoreCapacity
  *
- * DEV: What if we merge KEY_PARAMS and this parsing schema into one?
+ * @typedef {keyof Key} KeyParams
  */
-const KEY_SCHEMA = {
-	StartX: 'S', StartY: 'T', EndX: 'E', EndY: 'N', GapX: 'H', GapY: 'V',
-	ChannelsPerPixel: 'P', Channels: 'C', IgnoreCapacity: "I",
-}
-
-const keyInputBlock = loadElement({
-	id: 'lsb-secret-key-block',
-	type: HTMLDivElement,
-})
-const keyInputOutput = loadElement({
-	id: 'lsb-secret-key',
-	type: HTMLInputElement,
-})
-const root = loadElement({ id: 'lsb', type: HTMLDivElement })
 
 /**
- * @type {LSBKey}
+ * Storage for parsed key information
+ * Should be the main source of truth
+ *
+ * @type Key
  */
 let key = {
 	StartX: 0,
@@ -48,49 +40,106 @@ let key = {
 	GapX: 0,
 	GapY: 0,
 	ChannelsPerPixel: 3,
-
-	// DEV: All values are numbers and only this are array
-	// It will be better to change it from input to checkboxes in UI and
-	// to int in logic
-	// Like: 101 = RGB, R and B is enabled
-	Channels: ['R', 'G', 'B'],
+	Channels: { R: true, G: true, B: true },
 	IgnoreCapacity: false,
 }
 
 /**
- * TODO: Description
+ * Scheme how to encode key information from inner structure to
+ * string represenation
+ *
+ * @type Record<KeyParams, string>
+ */
+const KEY_PARAMS_ENCODING = {
+	StartX: 'S',
+	StartY: 'T',
+	EndX: 'E',
+	EndY: 'N',
+	GapX: 'H',
+	GapY: 'V',
+	ChannelsPerPixel: 'P',
+	Channels: 'C',
+	IgnoreCapacity: 'I',
+}
+
+/**
+ * Names for all inputs which will be used to set different key params
+ *
+ * @typedef {(FIELDS)[keyof FIELDS]} KeyFields
+ */
+const FIELDS = /** @type {const} */ ({
+	StartX: 'StartX',
+	StartY: 'StartY',
+	EndX: 'EndX',
+	EndY: 'EndY',
+	GapX: 'GapX',
+	GapY: 'GapY',
+	ChannelsPerPixel: 'ChannelsPerPixel',
+	IgnoreCapacity: 'IgnoreCapacity',
+	ChannelsR: 'R',
+	ChannelsG: 'G',
+	ChannelsB: 'B',
+	Raw: 'RawKey',
+})
+const FIELDS_LIST = Object.values(FIELDS)
+
+/**
+ * All HTML inputs which are used to set key parameters
+ *
+ * @type Record<KeyFields, HTMLInputElement>
+ */
+// prettier-ignore
+const keyInputs = {
+	[FIELDS.StartX]: loadInputElement('lsb-key-start-x', FIELDS.StartX, 'number'),
+	[FIELDS.StartY]: loadInputElement('lsb-key-start-y', FIELDS.StartY, 'number'),
+	[FIELDS.EndX]: loadInputElement('lsb-key-end-x', FIELDS.EndX, 'number'),
+	[FIELDS.EndY]: loadInputElement('lsb-key-end-y', FIELDS.EndY, 'number'),
+	[FIELDS.GapX]: loadInputElement('lsb-key-gap-x', FIELDS.GapX, 'number'),
+	[FIELDS.GapY]: loadInputElement('lsb-key-gap-y', FIELDS.GapY, 'number'),
+	[FIELDS.ChannelsPerPixel]: loadInputElement('lsb-key-channels-per-pixel', FIELDS.ChannelsPerPixel, 'number'),
+	[FIELDS.ChannelsR]: loadInputElement('lsb-key-channels-r', FIELDS.ChannelsR, 'checkbox'),
+	[FIELDS.ChannelsG]: loadInputElement('lsb-key-channels-g', FIELDS.ChannelsG, 'checkbox'),
+	[FIELDS.ChannelsB]: loadInputElement('lsb-key-channels-b', FIELDS.ChannelsB, 'checkbox'),
+	[FIELDS.IgnoreCapacity]: loadInputElement('lsb-key-ignore-capacity', FIELDS.IgnoreCapacity, 'checkbox'),
+	[FIELDS.Raw]: loadInputElement('lsb-key-raw', FIELDS.Raw, 'text'),
+}
+
+/**
+ * Called when value of some of fields are changed
+ *
+ * AKA adapter from fields values to the inner key state
+ *
  * @param {HTMLInputElement} target
  */
 function lsbKeyInputHandler(target) {
-	// DEV: Magic string
-	if (target.name === 'key') {
-		if (target.value === '') return
-
-		const parsedKey = checkGoOutput(goParseLSBKey(target.value))
-		key = parsedKey
-
-		render()
-		return
-	}
-
+	const field = target.name
 	assert(
-		KEY_PARAMS.includes(target.name),
-		'Key input block input name should be one of LSB key params',
+		FIELDS_LIST.includes(field),
+		'Key input block input name should be one of LSB key params or raw key param',
 	)
 
-	// DEV: Magic string
-	if (target.name === 'Channels') {
-		const value = target.value.split('')
-		key[target.name] = value
+	if (field === FIELDS.Raw) {
+		key = checkGoOutput(goParseLSBKey(target.value))
 
 		render()
 		return
 	}
 
-	if (target.name === 'IgnoreCapacity') {
-		key[target.name] = target.checked
+	if (
+		field === FIELDS.ChannelsR ||
+		field === FIELDS.ChannelsG ||
+		field === FIELDS.ChannelsB
+	) {
+		const value = target.checked
+		key.Channels[field] = value
 
-		console.log('[DEBUG JS] IgnoreCapacity handles', key[target.name])
+		render()
+		return
+	}
+
+	if (field === FIELDS.IgnoreCapacity) {
+		key.IgnoreCapacity = target.checked
+
 		render()
 		return
 	}
@@ -98,78 +147,78 @@ function lsbKeyInputHandler(target) {
 	const value = Number(target.value)
 	assert(Number.isNaN(value) === false, 'Input number value should not be NaN!')
 
-	key[target.name] = value
+	key[field] = value
 	render()
 }
 
-typedEventListener(
-	keyInputBlock,
-	'change',
-	HTMLInputElement,
-	lsbKeyInputHandler,
-)
-
+/**
+ * Sync values of HTML inputs with inner key storage by overwriting inputs
+ */
 function render() {
-	keyInputOutput.value = generateLsbKey(key)
-	setLSBKeyFields()
-}
-
-// DEV: This function should not work like that
-// It will be better to parse all inputs first, and after use them to set values
-function setLSBKeyFields() {
-	for (const keySelector of KEY_PARAMS) {
-		const input = keyInputBlock.querySelector(`[name=${keySelector}]`)
-		assert(
-			input instanceof HTMLInputElement,
-			`LSB key field with name ${keySelector} should be HTMLInputElement`,
-		)
-
-		// DEV: Magic string
-		if (keySelector === 'Channels') {
-			input.value = key[keySelector].join('')
+	for (const field of FIELDS_LIST) {
+		const input = keyInputs[field]
+		if (
+			field === FIELDS.ChannelsR ||
+			field === FIELDS.ChannelsG ||
+			field === FIELDS.ChannelsB
+		) {
+			input.checked = key.Channels[field]
 			continue
 		}
 
-		if (keySelector === 'IgnoreCapacity') {
-			input.checked = key[keySelector]
+		if (field === FIELDS.IgnoreCapacity) {
+			input.checked = key[field]
 			continue
 		}
 
-		input.value = String(key[keySelector])
+		if (field === FIELDS.Raw) {
+			keyInputs.RawKey.value = generateLsbKey(key)
+			continue
+		}
+
+		input.value = String(key[field])
 	}
 }
 
 /**
  * Transform whole lsb key from inner/parsed represenation to encoded/string
  *
- * @param {LSBKey} lsbKey
- *
- * DEV: I'm not sure about this function...
+ * @param {Key} lsbKey
  */
 function generateLsbKey(lsbKey) {
 	let result = ''
 
-	for (const param of KEY_PARAMS) {
-		if (lsbKey[param] !== undefined) {
-			// DEV: Magic string
+	for (const field of FIELDS_LIST) {
+		if (field == FIELDS.Raw) continue
 
-			if (param === 'Channels') {
-				result += lsbKey[param].map(el => KEY_SCHEMA[param] + el).join('')
-				continue
+		if (
+			field === FIELDS.ChannelsR ||
+			field === FIELDS.ChannelsG ||
+			field === FIELDS.ChannelsB
+		) {
+			if (lsbKey.Channels[field] === true) {
+				result += KEY_PARAMS_ENCODING.Channels + field
 			}
 
-			if (param === 'IgnoreCapacity') {
-				const value = lsbKey[param] === true ? '1' : '0'
-				result += KEY_SCHEMA[param] + value
-				continue
-			}
-
-			result += KEY_SCHEMA[param] + lsbKey[param]
+			continue
 		}
+
+		if (field === FIELDS.IgnoreCapacity) {
+			const value = lsbKey[field] === true ? '1' : '0'
+			result += KEY_PARAMS_ENCODING[field] + value
+			continue
+		}
+
+		result += KEY_PARAMS_ENCODING[field] + lsbKey[field]
 	}
 
 	return result
 }
+
+const root = loadElement({ id: 'lsb', type: HTMLDivElement })
+const keyBlock = loadElement({ id: 'lsb-key-block', type: HTMLDivElement })
+typedEventListener(keyBlock, 'change', HTMLInputElement, lsbKeyInputHandler)
+render()
 
 /**
  * @param {Uint8Array<ArrayBufferLike>} originalImage

@@ -102,10 +102,6 @@ func calculateImageCapacity(startX, startY, endX, endY int, bounds image.Rectang
 // visualDebug calculate RGB values for specific pixel to allow visible to eye
 // troubleshoot of internal algorithm
 func visualDebug(r, g, b, one uint8, key Key, currentChannel Channel) (uint8, uint8, uint8) {
-	if key.ChannelsPerPixel == 1 {
-		return 0, 0, 0
-	}
-
 	channelsMap := map[Channel]bool{}
 	for _, value := range key.Channels {
 		channelsMap[value] = true

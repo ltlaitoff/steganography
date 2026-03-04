@@ -160,22 +160,24 @@
 					<div id="lsb">
 						<div
 							class="block"
-							id="lsb-secret-key-block"
+							id="lsb-key-block"
 						>
 							<h2 class="block--title">LSB Key</h2>
 							<div class="block--elements">
 								<label class="input-label">
 									<h2 class="input-title">Key</h2>
 									<input
+										name="RawKey"
 										type="text"
 										name="key"
-										id="lsb-secret-key"
+										id="lsb-key-raw"
 									/>
 								</label>
 
 								<label class="input-label">
 									<h2 class="input-title">Start position of X</h2>
 									<input
+										id="lsb-key-start-x"
 										value="0"
 										type="number"
 										name="StartX"
@@ -185,6 +187,7 @@
 								<label class="input-label">
 									<h2 class="input-title">Start position of Y</h2>
 									<input
+										id="lsb-key-start-y"
 										value="0"
 										type="number"
 										name="StartY"
@@ -196,6 +199,7 @@
 										End position of X (0 is image end):
 									</h2>
 									<input
+										id="lsb-key-end-x"
 										value="0"
 										type="number"
 										name="EndX"
@@ -207,6 +211,7 @@
 										End position of Y (0 is image end):
 									</h2>
 									<input
+										id="lsb-key-end-y"
 										value="0"
 										type="number"
 										name="EndY"
@@ -216,6 +221,7 @@
 								<label class="input-label">
 									<h2 class="input-title">Gap beetween X:</h2>
 									<input
+										id="lsb-key-gap-x"
 										value="0"
 										type="number"
 										name="GapX"
@@ -225,6 +231,7 @@
 								<label class="input-label">
 									<h2 class="input-title">Gap beetween Y:</h2>
 									<input
+										id="lsb-key-gap-y"
 										value="0"
 										type="number"
 										name="GapY"
@@ -236,26 +243,48 @@
 										How much channels used per one pixel?
 									</h2>
 									<input
+										id="lsb-key-channels-per-pixel"
 										value="3"
 										type="number"
 										name="ChannelsPerPixel"
 									/>
 								</label>
 
-								<label class="input-label">
-									<h2 class="input-title">
-										Used channels? Example: "RBG", "RB", "G"
-									</h2>
-									<input
-										value="RBG"
-										type="text"
-										name="Channels"
-									/>
-								</label>
+								<div class="input-label input-label--parent">
+									<h2 class="input-title">Used channels</h2>
+									<label class="input-label">
+										<h2 class="input-title">Red channel</h2>
+										<input
+											id="lsb-key-channels-r"
+											checked
+											type="checkbox"
+											name="R"
+										/>
+									</label>
+									<label class="input-label">
+										<h2 class="input-title">Green channel</h2>
+										<input
+											id="lsb-key-channels-g"
+											checked
+											type="checkbox"
+											name="G"
+										/>
+									</label>
+									<label class="input-label">
+										<h2 class="input-title">Blue channel</h2>
+										<input
+											id="lsb-key-channels-b"
+											checked
+											type="checkbox"
+											name="B"
+										/>
+									</label>
+								</div>
 
 								<label class="input-label">
 									<h2 class="input-title">Ignore container image capacity</h2>
 									<input
+										id="lsb-key-ignore-capacity"
 										type="checkbox"
 										name="IgnoreCapacity"
 									/>

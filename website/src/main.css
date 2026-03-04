@@ -301,6 +301,15 @@ label:hover {
 	justify-content: space-between;
 }
 
+.input-label:has(.input-label) {
+	flex-direction: column;
+	row-gap: 0.5rem;
+}
+
+.input-label>.input-label {
+	margin-left: 1rem;
+}
+
 input[type='text'],
 input[type='number'] {
 	border: var(--color-slate-500) 1px solid;

@@ -55,20 +55,6 @@ interface Config {
 	}
 }
 
-interface LSBKey {
-	StartX: number
-	StartY: number
-	EndX: number
-	EndY: number
-	GapX: number
-	GapY: number
-	ChannelsPerPixel: number
-	Channels: string[]
-	IgnoreCapacity: boolean
-}
-
-type LSBKeyParams = keyof LSBKey
-
 interface State {
 	activeMethod: Methods
 	activeOperation: Operation
@@ -110,6 +96,10 @@ type TypedEventListener = <
 	elementType: new () => T,
 	listener: (target: T, e: TypedEventTarget<T, HTMLElementEventMap<K>>) => any,
 ) => void
+
+type ObjectValuesToType<T extends object, V> = {
+	[P in keyof T]: T[P] extends object ? ObjectValuesToType<T[P], V> : V
+}
 
 type CheckGoOutput = <T>(content: GolangOk<T> | GolangError) => T
 

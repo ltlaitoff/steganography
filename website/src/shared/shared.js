@@ -29,6 +29,33 @@ export function loadElement(elementInfo) {
 }
 
 /**
+* Get input element from DOM tree with type-checks
+*
+* @type {(id: string, name: string, type: string) => HTMLInputElement}
+*/
+export function loadInputElement(id, name, type) {
+	const element = document.querySelector('#' + id)
+	assert(
+		element !== null,
+		`Element with id \"#${id}\" should not be null!`,
+	)
+	assert(
+		element instanceof HTMLInputElement,
+		`Element with id \"#${id}\" should be instance of ${HTMLInputElement.name}!`,
+	)
+	assert(
+		element.name === name,
+		`Element with id \"#${id}\" should have name = ${name}!`,
+	)
+	assert(
+		element.type === type,
+		`Element with id \"#${id}\" should have type = ${type}!`,
+	)
+
+	return element
+}
+
+/**
  * Wrapper on addEventListener with additional event target type check
  *
  * @type {TypedEventListener}
@@ -38,7 +65,7 @@ export function typedEventListener(element, type, elementType, callback) {
 		assert(
 			e.target instanceof elementType,
 			`Event on element ${element.tagName} #${element.id} should have target` +
-				` with type ${elementType} on ${type}`,
+			` with type ${elementType} on ${type}`,
 		)
 
 		callback(e.target, { ...e, target: e.target })
@@ -46,7 +73,8 @@ export function typedEventListener(element, type, elementType, callback) {
 }
 
 /**
- * TODO: Description
+ * Golang logic response wrapper for throw JS errors on logic errors
+ *
  * @type {CheckGoOutput}
  */
 export function checkGoOutput(result) {
