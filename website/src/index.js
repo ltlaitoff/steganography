@@ -7,7 +7,7 @@ import {
 } from './shared/shared.js'
 import * as ErrorHandler from './error-handler.js'
 import * as LSB from './lsb.js'
-
+import { log } from './shared/debug.js'
 /**
  * @type {Config}
  */
@@ -283,8 +283,8 @@ function swapImagesHandler() {
  * @param {ConstuctorReturnType<typeof config.ids.DEBUG.type>} target
  */
 function debugChangeHandler(target) {
-	state.debugMode = target.checked
-	goDebug(state.debugMode)
+	log.debugMode = target.checked
+	goDebug(target.checked)
 }
 
 /**

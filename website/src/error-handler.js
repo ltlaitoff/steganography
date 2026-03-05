@@ -1,3 +1,4 @@
+import { log } from './shared/debug.js'
 import { AssertionError, UserError } from './shared/errors.js'
 import { loadElement } from './shared/shared.js'
 
@@ -26,6 +27,8 @@ const button = loadElement({ id: 'error-close', type: HTMLButtonElement })
  * @param {unknown} err
  */
 function errorHandler(err) {
+	log.debug('Error handler', err)
+
 	if (err instanceof AssertionError) {
 		showError(
 			'Inner application error which should never happen! Check console for more details!',
@@ -43,7 +46,6 @@ function errorHandler(err) {
 		return
 	}
 
-	console.log('Error', err)
 	showError('Catch unknown error! Check console for more details!')
 }
 

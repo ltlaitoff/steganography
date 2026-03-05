@@ -3,16 +3,17 @@
 package main
 
 import (
-	"fmt"
+	"log/slog"
 	"syscall/js"
 
 	"github.com/ltlaitoff/steganography/stego"
 )
 
-// DEV: It will be cool if debug mode actually enable all debug comments 
+// DEV: It will be cool if debug mode actually enable all debug comments
 // in console as well
 
 func encodeLsbWrapper(this js.Value, args []js.Value) interface{} {
+	slog.Debug("Run encode LSB", "Args", args)
 	containerImage := JSToGoBytes(args[0])
 	message := JSToGoBytes(args[1])
 	key := args[2].String()
@@ -30,7 +31,7 @@ func encodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 }
 
 func decodeLsbWrapper(this js.Value, args []js.Value) interface{} {
-	fmt.Println("[GO]: Run Decode LSB")
+	slog.Debug("Run Decode LSB", "Args", args)
 
 	image := JSToGoBytes(args[0])
 	key := args[1].String()
@@ -48,7 +49,7 @@ func decodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 }
 
 func encodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
-	fmt.Println("[GO]: Run BPCS Encode")
+	slog.Debug("Run BPCS Encode", "Args", args)
 
 	containerImage := JSToGoBytes(args[0])
 	message := JSToGoBytes(args[1])
@@ -66,7 +67,7 @@ func encodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
 }
 
 func decodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
-	fmt.Println("[GO]: Run Decode LSB")
+	slog.Debug("Run Decode LSB", "Args", args)
 
 	image := JSToGoBytes(args[0])
 
@@ -83,6 +84,8 @@ func decodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
 }
 
 func debug(this js.Value, args []js.Value) interface{} {
+	slog.Debug("Call debug", "Args", args)
+
 	debugMode := args[0].Bool()
 	stego.SetDebugMode(debugMode)
 
@@ -94,7 +97,7 @@ func parseLSBKey(this js.Value, args []js.Value) interface{} {
 
 	result, err := stego.ParseLsbKey(key)
 
-	fmt.Println("Parsed!", result)
+	slog.Debug("Called parse lsb key", "Key", result)
 
 	if err != nil {
 		return JsError(err.Error())

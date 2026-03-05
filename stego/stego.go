@@ -3,6 +3,7 @@ package stego
 import (
 	"encoding/binary"
 	"fmt"
+	"log/slog"
 	"reflect"
 	"strconv"
 	"unicode"
@@ -28,6 +29,12 @@ var parameters Parameters = Parameters{
 // SetDebugMode allows enable or disable a developer troubleshoot tool
 // Check Parameters.DebugMode for more information
 func SetDebugMode(debugMode bool) {
+	if debugMode == true {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+	} else {
+		slog.SetLogLoggerLevel(slog.LevelInfo)
+	}
+
 	parameters.DebugMode = debugMode
 }
 
@@ -82,7 +89,7 @@ func ParseLsbKey(key string) (*lsb.Key, error) {
 		}
 
 		if property == "IgnoreCapacity" {
-			fmt.Println("[DEBUG] IgnoreCapacity", property, buffer, key)
+			slog.Debug("LSB key parsing in IgnoreCapacity", "Property", property, "buffer", buffer, "key", key)
 			assert.Assert(field.Kind() == reflect.Bool, "IgnoreCapacity key field should be bool!")
 
 			field.SetBool(buffer == "1")
