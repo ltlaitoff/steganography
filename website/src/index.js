@@ -3,11 +3,12 @@ import {
 	loadElement,
 	typedEventListener,
 	fileToByteArray,
-	checkGoOutput,
 } from './shared/shared.js'
 import * as ErrorHandler from './error-handler.js'
 import * as LSB from './lsb.js'
+import * as BPCS from './bpcs.js'
 import { log } from './shared/debug.js'
+
 /**
  * @type {Config}
  */
@@ -132,7 +133,6 @@ const DEBUG = loadElement(config.ids.DEBUG)
 const state = {
 	activeMethod: 'LSB',
 	activeOperation: 'ENCODE',
-	debugMode: false,
 
 	originalImageFile: undefined,
 	resultImageFile: undefined,
@@ -142,6 +142,17 @@ const state = {
 	secretMessage: '',
 	encodeSecretFile: undefined,
 	decodedSecretFile: undefined,
+}
+
+const methodsLogicMap = /** @type const */ {
+	Encode: {
+		LSB: LSB.encode,
+		BPCS: BPCS.encode,
+	},
+	Decode: {
+		LSB: LSB.decode,
+		BPCS: BPCS.decode,
+	},
 }
 
 // DEV: Re-check all assert messages!
@@ -346,26 +357,17 @@ async function prepareSecretMessage() {
 // TODO: Description
 async function submitHandler() {
 	ErrorHandler.resetError()
-	userAssert(state.originalImageFile !== undefined, 'Image is not loaded!')
 
+	userAssert(state.originalImageFile !== undefined, 'Image is not loaded!')
 	const originalImage = await fileToByteArray(state.originalImageFile)
+
 	if (state.activeOperation === 'ENCODE') {
 		const message = await prepareSecretMessage()
 		assert(message !== undefined, 'Prepared secret message should be defined!')
 
-		/**
-		 * @type {Uint8Array<ArrayBuffer>}
-		 */
-		let content
-
-		// DEV: This if/else can refactored into something better
-		if (state.activeMethod === 'LSB') {
-			content = LSB.encode(originalImage, message)
-		} else if (state.activeMethod === 'BPCS') {
-			content = checkGoOutput(goEncodeBPCS(originalImage, message))
-		} else {
-			assert(false, 'Active method not found!')
-		}
+		const method = methodsLogicMap.Encode[state.activeMethod]
+		assert(method !== undefined, 'Active method not found!')
+		const content = method(originalImage, message)
 
 		const blob = new Blob([content])
 		state.resultImageFile = new File([blob], `result.${blob.type}`, {
@@ -374,19 +376,9 @@ async function submitHandler() {
 	}
 
 	if (state.activeOperation === 'DECODE') {
-		/**
-		 * @type {Uint8Array<ArrayBuffer>}
-		 */
-		let content
-
-		// DEV: This if/else can refactored into something better
-		if (state.activeMethod === 'LSB') {
-			content = LSB.decode(originalImage)
-		} else if (state.activeMethod === 'BPCS') {
-			content = checkGoOutput(goDecodeBPCS(originalImage))
-		} else {
-			assert(false, 'Active method not found!')
-		}
+		const method = methodsLogicMap.Decode[state.activeMethod]
+		assert(method !== undefined, 'Active method not found!')
+		const content = method(originalImage)
 
 		if (state.secretAsFile) {
 			state.decodedSecretFile = new File([content], `result`)

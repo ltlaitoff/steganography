@@ -59,8 +59,6 @@ interface State {
 	activeMethod: Methods
 	activeOperation: Operation
 
-	debugMode: boolean
-
 	originalImageFile: File | undefined
 	resultImageFile: File | undefined
 
