@@ -6,7 +6,7 @@ import (
 	"syscall/js"
 )
 
-// TODO: Description
+// JSToGoBytes transforms javascript Uint8Array to golang []byte
 func JSToGoBytes(jsImageBytes js.Value) []byte {
 	goImageBytes := make([]byte, jsImageBytes.Get("byteLength").Int())
 	js.CopyBytesToGo(goImageBytes, jsImageBytes)
@@ -14,7 +14,7 @@ func JSToGoBytes(jsImageBytes js.Value) []byte {
 	return goImageBytes
 }
 
-// TODO: Description
+// JSToGoBytes transforms golang []byte to javascript Uint8Array
 func GoToJsBytes(goImageBytes []byte) js.Value {
 	uint8Array := js.Global().Get("Uint8Array").New(len(goImageBytes))
 	js.CopyBytesToJS(uint8Array, goImageBytes)
@@ -22,12 +22,18 @@ func GoToJsBytes(goImageBytes []byte) js.Value {
 	return uint8Array
 }
 
-// TODO: Description
+// JsError used to get formatted error for javascript
 func JsError(message string) any {
 	return js.ValueOf(map[string]any{
-		"ok":    false,
+		"ok":      false,
 		"message": message,
 	})
 }
 
-// DEV: Why there are not JSSuccess or JSOk? 
+// JsSuccess used to get formatted data for javascript
+func JsSuccess(data any) any {
+	return js.ValueOf(map[string]any{
+		"ok":   true,
+		"data": data,
+	})
+}

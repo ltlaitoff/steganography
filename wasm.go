@@ -9,10 +9,7 @@ import (
 	"github.com/ltlaitoff/steganography/stego"
 )
 
-// DEV: It will be cool if debug mode actually enable all debug comments
-// in console as well
-
-func encodeLsbWrapper(this js.Value, args []js.Value) interface{} {
+func encodeLsb(this js.Value, args []js.Value) interface{} {
 	slog.Debug("Run encode LSB", "Args", args)
 	containerImage := JSToGoBytes(args[0])
 	message := JSToGoBytes(args[1])
@@ -24,13 +21,10 @@ func encodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 		return JsError(err.Error())
 	}
 
-	return js.ValueOf(map[string]any{
-		"ok":   true,
-		"data": GoToJsBytes(encodedImage),
-	})
+	return JsSuccess(GoToJsBytes(encodedImage))
 }
 
-func decodeLsbWrapper(this js.Value, args []js.Value) interface{} {
+func decodeLsb(this js.Value, args []js.Value) interface{} {
 	slog.Debug("Run Decode LSB", "Args", args)
 
 	image := JSToGoBytes(args[0])
@@ -42,13 +36,10 @@ func decodeLsbWrapper(this js.Value, args []js.Value) interface{} {
 		return JsError(err.Error())
 	}
 
-	return js.ValueOf(map[string]any{
-		"ok":   true,
-		"data": GoToJsBytes(result),
-	})
+	return JsSuccess(GoToJsBytes(result))
 }
 
-func encodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
+func encodeBpcs(this js.Value, args []js.Value) interface{} {
 	slog.Debug("Run BPCS Encode", "Args", args)
 
 	containerImage := JSToGoBytes(args[0])
@@ -60,13 +51,10 @@ func encodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
 		return JsError(err.Error())
 	}
 
-	return js.ValueOf(map[string]any{
-		"ok":   true,
-		"data": GoToJsBytes(encodedImage),
-	})
+	return JsSuccess(GoToJsBytes(encodedImage))
 }
 
-func decodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
+func decodeBpcs(this js.Value, args []js.Value) interface{} {
 	slog.Debug("Run Decode LSB", "Args", args)
 
 	image := JSToGoBytes(args[0])
@@ -77,10 +65,7 @@ func decodeBpcsWrapper(this js.Value, args []js.Value) interface{} {
 		return JsError(err.Error())
 	}
 
-	return js.ValueOf(map[string]any{
-		"ok":   true,
-		"data": GoToJsBytes(result),
-	})
+	return JsSuccess(GoToJsBytes(result))
 }
 
 func debug(this js.Value, args []js.Value) interface{} {
@@ -110,30 +95,27 @@ func parseLSBKey(this js.Value, args []js.Value) interface{} {
 		channels[i] = result.Channels[i]
 	}
 
-	return js.ValueOf(map[string]any{
-		"ok": true,
-		"data": map[string]any{
-			"StartX":           result.StartX,
-			"StartY":           result.StartY,
-			"EndX":             result.EndX,
-			"EndY":             result.EndY,
-			"GapX":             result.GapX,
-			"GapY":             result.GapY,
-			"ChannelsPerPixel": result.ChannelsPerPixel,
-			"Channels":         js.ValueOf(channels),
-		},
+	return JsSuccess(map[string]any{
+		"StartX":           result.StartX,
+		"StartY":           result.StartY,
+		"EndX":             result.EndX,
+		"EndY":             result.EndY,
+		"GapX":             result.GapX,
+		"GapY":             result.GapY,
+		"ChannelsPerPixel": result.ChannelsPerPixel,
+		"Channels":         js.ValueOf(channels),
 	})
 }
 
 func main() {
 	c := make(chan bool)
 
-	js.Global().Set("goEncodeLSB", js.FuncOf(encodeLsbWrapper))
-	js.Global().Set("goDecodeLSB", js.FuncOf(decodeLsbWrapper))
+	js.Global().Set("goEncodeLSB", js.FuncOf(encodeLsb))
+	js.Global().Set("goDecodeLSB", js.FuncOf(decodeLsb))
 	js.Global().Set("goParseLSBKey", js.FuncOf(parseLSBKey))
 
-	js.Global().Set("goEncodeBPCS", js.FuncOf(encodeBpcsWrapper))
-	js.Global().Set("goDecodeBPCS", js.FuncOf(decodeBpcsWrapper))
+	js.Global().Set("goEncodeBPCS", js.FuncOf(encodeBpcs))
+	js.Global().Set("goDecodeBPCS", js.FuncOf(decodeBpcs))
 
 	js.Global().Set("goDebug", js.FuncOf(debug))
 
