@@ -1,4 +1,4 @@
-import { checkGoOutput } from "./shared/shared"
+import { checkGoOutput } from "./shared/shared.js"
 
 /**
  * @param {Uint8Array<ArrayBufferLike>} originalImage

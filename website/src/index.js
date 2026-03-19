@@ -383,7 +383,7 @@ async function submitHandler() {
 		if (state.secretAsFile) {
 			state.decodedSecretFile = new File([content], `result`)
 		} else {
-			SECRET.decode.secretMessageOutput.value = content.toString()
+			SECRET.decode.secretMessageOutput.value = new TextDecoder().decode(content)
 		}
 	}
 
