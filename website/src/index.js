@@ -9,6 +9,7 @@ import * as LSB from './methods/lsb.js'
 import * as BPCS from './methods/bpcs.js'
 import { log } from './shared/debug.js'
 import { CreateMenu } from './menu.js'
+import { getSecret, setSecret } from './secret.js'
 
 const WASM_URL = "./main.wasm"
 
@@ -37,35 +38,6 @@ const config = {
 		swapButton: { id: "swap", type: HTMLButtonElement },
 	},
 
-	SECRET: {
-		asFileCheckbox: { id: 'secret-as-file', type: HTMLInputElement },
-		messageInput: { id: 'encode-secret-message-input', type: HTMLInputElement },
-		fileInput: { id: 'encode-secret-file-input', type: HTMLInputElement },
-		messageInputBlock: {
-			id: 'encode-secret-message-input-block',
-			type: HTMLLabelElement,
-		},
-		fileInputBlock: {
-			id: 'encode-secret-file-input-block',
-			type: HTMLLabelElement,
-		},
-		messageOutputBlock: {
-			id: 'decode-secret-message-output-block',
-			type: HTMLLabelElement,
-		},
-		fileOutputButtonBlock: {
-			id: 'decode-secret-file-output-button-block',
-			type: HTMLDivElement,
-		},
-		messageOutput: {
-			id: 'decode-secret-message-output',
-			type: HTMLInputElement,
-		},
-		fileOutputButton: {
-			id: 'decode-secret-file-output-button',
-			type: HTMLButtonElement,
-		},
-	},
 	// prettier-ignore
 	// DEV: If we remove LSB and DEBUG it's all about secret
 	ids: {
@@ -89,24 +61,6 @@ const UI = {
 	swapButton: loadElement(config.UIids.swapButton),
 }
 
-// prettier-ignore
-// DEV: Rename to SECRET and remove all this secret prefixes?
-const SECRET = {
-	secretAsFileCheckbox: loadElement(config.SECRET.asFileCheckbox),
-	encode: {
-		secretMessageInput: loadElement(config.SECRET.messageInput),
-		secretFileInput: loadElement(config.SECRET.fileInput),
-		secretMessageInputBlock: loadElement(config.SECRET.messageInputBlock),
-		secretFileInputBlock: loadElement(config.SECRET.fileInputBlock)
-	},
-	decode: {
-		secretMessageOutput: loadElement(config.SECRET.messageOutput),
-		secretFileOutputButton: loadElement(config.SECRET.fileOutputButton),
-		secretMessageOutputBlock: loadElement(config.SECRET.messageOutputBlock),
-		secretFileOutputButtonBlock: loadElement(config.SECRET.fileOutputButtonBlock)
-	}
-}
-
 const DEBUG = loadElement(config.ids.DEBUG)
 
 /**
@@ -118,12 +72,6 @@ const state = {
 
 	originalImageFile: undefined,
 	resultImageFile: undefined,
-
-	// DEV: Merge secrets?
-	secretAsFile: false,
-	secretMessage: '',
-	encodeSecretFile: undefined,
-	decodedSecretFile: undefined,
 }
 
 const methodsLogicMap = /** @type const */ {
@@ -208,53 +156,6 @@ GLOBAL.originalImageInputDropZone.addEventListener('drop', e => {
 	render()
 })
 
-/**
- * TODO: Description
- */
-function secretFileOutputHandler() {
-	assert(
-		state.decodedSecretFile !== undefined,
-		'Decoded secret file lsb should be defined on click on button',
-	)
-
-	const url = URL.createObjectURL(state.decodedSecretFile)
-
-	// DEV: It's a bad logic
-	// BUG: It will not work with big files
-	const a = document.createElement('a')
-	a.href = url
-	a.download = state.decodedSecretFile.name
-	document.body.appendChild(a)
-	a.click()
-
-	a.remove()
-	URL.revokeObjectURL(url)
-}
-
-// DEV: What if we group secret handlers
-// DEV: What if we group image handlers
-
-/**
- * TODO: Description
- * @param {ConstuctorReturnType<typeof config.SECRET.fileInput.type>} target
- */
-function secretFileInputHandler(target) {
-	assert(target.files !== null, 'LSB secret file input should have files')
-
-	const file = target.files[0]
-	userAssert(file !== undefined, 'No file selected. Please choose a file.')
-
-	state.encodeSecretFile = file
-}
-
-/**
- * TODO: Description
- * @param {ConstuctorReturnType<typeof config.SECRET.asFileCheckbox.type>} target
- */
-function secretMessageAsFileHandler(target) {
-	state.secretAsFile = target.checked
-	render()
-}
 
 /**
  * TODO: Description
@@ -295,13 +196,6 @@ function originalImageChangeHandler(target) {
 	render()
 }
 
-/**
- * TODO: Description
- * @param {ConstuctorReturnType<typeof config.SECRET.messageInput.type>} target
- */
-function secretMessageInputHandler(target) {
-	state.secretMessage = target.value
-}
 
 /**
  * Create all event handlers
@@ -311,28 +205,7 @@ function initEventHandlers() {
 	typedEventListener(DEBUG, 'change', config.ids.DEBUG.type, debugChangeHandler)
 	typedEventListener(GLOBAL.originalImageInput, 'change', config.globalIds.originalImageInput.type, originalImageChangeHandler)
 	typedEventListener(UI.swapButton, 'click', config.UIids.swapButton.type, swapImagesHandler)
-	typedEventListener(SECRET.secretAsFileCheckbox, "change", config.SECRET.asFileCheckbox.type, secretMessageAsFileHandler)
-	typedEventListener(SECRET.encode.secretFileInput, "change", config.SECRET.fileInput.type, secretFileInputHandler)
-	typedEventListener(SECRET.decode.secretFileOutputButton, "click", config.SECRET.fileOutputButton.type, secretFileOutputHandler)
 	typedEventListener(GLOBAL.submitButton, 'click', HTMLButtonElement, submitHandler)
-	typedEventListener(SECRET.encode.secretMessageInput, 'change', config.SECRET.messageInput.type, secretMessageInputHandler)
-}
-
-// TODO: Description
-// DEV: Does this function make sense?
-async function prepareSecretMessage() {
-	if (state.secretAsFile === true) {
-		userAssert(
-			state.encodeSecretFile !== undefined,
-			'Secret file should exists to run LSB encoding',
-		)
-
-		return await fileToByteArray(state.encodeSecretFile)
-	}
-
-	userAssert(state.secretMessage !== '', 'Secret message is empty!')
-
-	return new TextEncoder().encode(state.secretMessage)
 }
 
 // TODO: Description
@@ -343,7 +216,7 @@ async function submitHandler() {
 	const originalImage = await fileToByteArray(state.originalImageFile)
 
 	if (state.activeOperation === 'ENCODE') {
-		const message = await prepareSecretMessage()
+		const message = await getSecret()
 		assert(message !== undefined, 'Prepared secret message should be defined!')
 
 		const method = methodsLogicMap.Encode[state.activeMethod]
@@ -361,11 +234,7 @@ async function submitHandler() {
 		assert(method !== undefined, 'Active method not found!')
 		const content = method(originalImage)
 
-		if (state.secretAsFile) {
-			state.decodedSecretFile = new File([content], `result`)
-		} else {
-			SECRET.decode.secretMessageOutput.value = new TextDecoder().decode(content)
-		}
+		setSecret(content)
 	}
 
 	render()
@@ -444,25 +313,5 @@ function render() {
 
 	if (state.resultImageFile) {
 		GLOBAL.resultImagePreview.src = URL.createObjectURL(state.resultImageFile)
-	}
-
-	SECRET.secretAsFileCheckbox.checked = state.secretAsFile
-
-	if (state.secretAsFile) {
-		SECRET.encode.secretMessageInputBlock.classList.add('hidden')
-		SECRET.decode.secretMessageOutputBlock.classList.add('hidden')
-		SECRET.encode.secretFileInputBlock.classList.remove('hidden')
-		SECRET.decode.secretFileOutputButtonBlock.classList.remove('hidden')
-	} else {
-		SECRET.encode.secretMessageInputBlock.classList.remove('hidden')
-		SECRET.decode.secretMessageOutputBlock.classList.remove('hidden')
-		SECRET.encode.secretFileInputBlock.classList.add('hidden')
-		SECRET.decode.secretFileOutputButtonBlock.classList.add('hidden')
-	}
-
-	if (state.decodedSecretFile) {
-		SECRET.decode.secretFileOutputButton.disabled = false
-	} else {
-		SECRET.decode.secretFileOutputButton.disabled = true
 	}
 }

@@ -21,18 +21,6 @@ interface Config {
 		swapButton: ElementInfo<HTMLButtonElement>
 	}
 
-	SECRET: {
-		asFileCheckbox: ElementInfo<HTMLInputElement>
-		messageInputBlock: ElementInfo<HTMLLabelElement>
-		fileInputBlock: ElementInfo<HTMLLabelElement>
-		messageInput: ElementInfo<HTMLInputElement>
-		fileInput: ElementInfo<HTMLInputElement>
-		messageOutput: ElementInfo<HTMLInputElement>
-		fileOutputButton: ElementInfo<HTMLButtonElement>
-		messageOutputBlock: ElementInfo<HTMLLabelElement>
-		fileOutputButtonBlock: ElementInfo<HTMLDivElement>
-	}
-
 	ids: {
 		DEBUG: ElementInfo<HTMLInputElement>
 	}
@@ -44,12 +32,6 @@ interface State {
 
 	originalImageFile: File | undefined
 	resultImageFile: File | undefined
-
-	secretAsFile: boolean
-	secretMessage: string
-
-	encodeSecretFile: File | undefined
-	decodedSecretFile: File | undefined
 }
 
 type Assert = (condition: boolean, message: string) => asserts condition
