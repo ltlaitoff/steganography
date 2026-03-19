@@ -5,16 +5,16 @@ import {
 	fileToByteArray,
 } from './shared/shared.js'
 import * as ErrorHandler from './error-handler.js'
-import * as LSB from './lsb.js'
-import * as BPCS from './bpcs.js'
+import * as LSB from './methods/lsb.js'
+import * as BPCS from './methods/bpcs.js'
 import { log } from './shared/debug.js'
+
+const WASM_URL = "./main.wasm"
 
 /**
  * @type {Config}
  */
 const config = {
-	wasmUrl: './main.wasm',
-
 	// DEV: globalIds, menu ids, UIids and just ids?
 	// Does it make sense?
 
@@ -444,7 +444,7 @@ async function main() {
 	const go = new Go()
 
 	const wasmModule = await WebAssembly.instantiateStreaming(
-		fetch(config.wasmUrl),
+		fetch(WASM_URL),
 		go.importObject,
 	)
 

@@ -7,8 +7,6 @@ interface ElementInfo<T extends HTMLElement = HTMLElement> {
 }
 
 interface Config {
-	wasmUrl: string
-
 	globalIds: {
 		originalImageInput: ElementInfo<HTMLInputElement>
 		originalImageInputDropZone: ElementInfo<HTMLLabelElement>
