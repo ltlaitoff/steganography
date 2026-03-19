@@ -221,7 +221,7 @@ func EncodeBPCS(imageBytes []byte, message []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	err = bpcs.EncodeBPCS(img, addSecretLength(message))
+	err = bpcs.Encode(img, addSecretLength(message))
 	if err != nil {
 		return nil, err
 	}
@@ -242,10 +242,10 @@ func DecodeBPCS(imageBytes []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	secretLengthString := bpcs.DecodeBPCS(img, 4)
+	secretLengthString := bpcs.Decode(img, 4)
 	secretLength := binary.LittleEndian.Uint32(secretLengthString)
 
-	result := bpcs.DecodeBPCS(img, int(4+secretLength))
+	result := bpcs.Decode(img, int(4+secretLength))
 
 	return result[4:], nil
 }

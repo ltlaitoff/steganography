@@ -172,8 +172,8 @@ func getDecodeBlocks(img *image.RGBA, shift uint8, maxBlocks int) [][8][8]uint8 
 	return blocks
 }
 
-// EncodeBPCS hides secretData in a image
-func EncodeBPCS(img *image.RGBA, secretData []byte) error {
+// Encode hides secretData in a image
+func Encode(img *image.RGBA, secretData []byte) error {
 	secretBlocks := secretToBlocks(secretData)
 
 	planeBlocks := [8][]Position{}
@@ -217,8 +217,8 @@ func EncodeBPCS(img *image.RGBA, secretData []byte) error {
 	return nil
 }
 
-// DecodeBPCS parses hidden data from image
-func DecodeBPCS(img *image.RGBA, expectedSize int) []byte {
+// Decode parses hidden data from image
+func Decode(img *image.RGBA, expectedSize int) []byte {
 	secretData := make([]byte, expectedSize)
 	totalBits := expectedSize * 8
 	bitIndex := 0

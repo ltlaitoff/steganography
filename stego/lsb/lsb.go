@@ -15,7 +15,7 @@ const (
 	ChannelB Channel = "B"
 )
 
-// TODO: Description
+// Key is set of parameters which can be used to change how LSB will work
 type Key struct {
 	// StartX set X in FROM which pixel (StartX, StartY) algorithm will work
 	StartX int
@@ -24,9 +24,11 @@ type Key struct {
 	StartY int
 
 	// EndX set X in to which pixel (EndX, EndY) algorithm will work
+	// Should be > 0
 	EndX int
 
 	// EndY set Y in to which pixel (EndX, EndY) algorithm will work
+	// Should be > 0
 	EndY int
 
 	// GapX set vertical(on X axis) distance beetween pixels
@@ -57,11 +59,6 @@ type Options struct {
 	Key Key
 }
 
-// TODO: Add some flag to disable if text will fit?
-// Q: What if user will set EndX to 0?
-// Should I dissallow that?
-// It will be safer to set it to the -1 and check on -1.. But
-
 // lsbBoundaries calculate field in which LSB will work
 func lsbBoundaries(bounds image.Rectangle, key Key) (int, int, int, int) {
 	startX, startY := max(key.StartX, bounds.Min.X), max(key.StartY, bounds.Min.Y)
@@ -80,14 +77,12 @@ func lsbBoundaries(bounds image.Rectangle, key Key) (int, int, int, int) {
 
 // calculateImageCapacity returns how many bits of information can be stored
 // in image by LSB algorithm
-// TEST: Add tests to this function
 func calculateImageCapacity(startX, startY, endX, endY int, bounds image.Rectangle, key Key) int {
 	pixelsCount := 0
 	rowCount := (endY - startY + key.GapY) / (key.GapY + 1)
 
 	if rowCount <= 1 {
-		// Q: Should I add + key.GapX?
-		pixelsCount = (endX - startX) / (key.GapX + 1)
+		pixelsCount = (endX - startX + key.GapX) / (key.GapX + 1)
 
 		return pixelsCount * key.ChannelsPerPixel
 	}
@@ -143,7 +138,7 @@ func CheckKeyValid(key Key) error {
 	return nil
 }
 
-// TODO: Description?
+// Encode hides secret data in image
 // PERF: Encoding are too slow with big images w/ big secret messages
 func Encode(img *image.RGBA, message []byte, options Options) (*image.RGBA, error) {
 	bounds := img.Bounds()
@@ -227,7 +222,7 @@ func Encode(img *image.RGBA, message []byte, options Options) (*image.RGBA, erro
 	return img, nil
 }
 
-// TODO: Description
+// Decode parse hidden secret data from image
 func Decode(img *image.RGBA, options Options, expectedLength int) ([]byte, error) {
 	totalBits := expectedLength * 8
 
