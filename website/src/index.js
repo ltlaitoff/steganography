@@ -8,6 +8,7 @@ import * as ErrorHandler from './error-handler.js'
 import * as LSB from './methods/lsb.js'
 import * as BPCS from './methods/bpcs.js'
 import { log } from './shared/debug.js'
+import { CreateMenu } from './menu.js'
 
 const WASM_URL = "./main.wasm"
 
@@ -29,23 +30,8 @@ const config = {
 		submitButton: { id: 'submit-button', type: HTMLButtonElement },
 	},
 
-	menu: {
-		name: {
-			methods: 'menu-method',
-			operation: 'menu-operation',
-		},
-		value: {
-			methods: ['lsb', 'bpcs'],
-			operation: ['encode', 'decode'],
-		},
-	},
-
 	// prettier-ignore
 	UIids: {
-		menu: {
-			base: { id: "menu", type: HTMLDivElement },
-			methods: { id: "menu-methods", type: HTMLDivElement },
-		},
 		encodeBlock: { id: "encode", type: HTMLDivElement },
 		decodeBlock: { id: "decode", type: HTMLDivElement },
 		swapButton: { id: "swap", type: HTMLButtonElement },
@@ -98,10 +84,6 @@ const GLOBAL = {
 }
 
 const UI = {
-	menu: {
-		base: loadElement(config.UIids.menu.base),
-		methods: loadElement(config.UIids.menu.methods),
-	},
 	encodeBlock: loadElement(config.UIids.encodeBlock),
 	decodeBlock: loadElement(config.UIids.decodeBlock),
 	swapButton: loadElement(config.UIids.swapButton),
@@ -334,7 +316,6 @@ function initEventHandlers() {
 	typedEventListener(SECRET.decode.secretFileOutputButton, "click", config.SECRET.fileOutputButton.type, secretFileOutputHandler)
 	typedEventListener(GLOBAL.submitButton, 'click', HTMLButtonElement, submitHandler)
 	typedEventListener(SECRET.encode.secretMessageInput, 'change', config.SECRET.messageInput.type, secretMessageInputHandler)
-	typedEventListener(UI.menu.base, 'change', HTMLInputElement, menuChangeHandler)
 }
 
 // TODO: Description
@@ -391,52 +372,33 @@ async function submitHandler() {
 }
 
 /**
- * TODO: Description
- * @param {HTMLInputElement} target
- */
-function menuChangeHandler(target) {
-	assert(
-		target.name === config.menu.name.methods ||
-			target.name === config.menu.name.operation,
-		'Menu input name should be one of menu names',
-	)
-
-	assert(
-		config.menu.value.methods.includes(target.value) ||
-			config.menu.value.operation.includes(target.value),
-		'Menu input value should be one from menu config',
-	)
-
-	if (target.name === config.menu.name.methods) {
-		if (target.checked) {
-			if (target.value === 'lsb') {
-				state.activeMethod = 'LSB'
-			}
-
-			if (target.value === 'bpcs') {
-				state.activeMethod = 'BPCS'
-			}
+	* @type {import('./menu.js').Blocks}
+	*/
+const MENU = [
+	{
+		name: "Methods",
+		operations: ["LSB", "BPCS"],
+		callback: (method) => {
+			assert(method === "LSB" || method == "BPCS", "Menu method should be one from passed!")
+			state.activeMethod = method
+			render()
 		}
-	}
-
-	if (target.name === config.menu.name.operation) {
-		if (target.checked) {
-			if (target.value === 'encode') {
-				state.activeOperation = 'ENCODE'
-			}
-
-			if (target.value === 'decode') {
-				state.activeOperation = 'DECODE'
-			}
+	},
+	{
+		name: "Operations",
+		operations: ["ENCODE", "DECODE"],
+		callback: (operation) => {
+			assert(operation === "ENCODE" || operation == "DECODE", "Menu operation should be one from passed!")
+			state.activeOperation = operation
+			render()
 		}
-	}
-
-	render()
-}
+	},
+]
 
 // DEV: Move this to top?
 async function main() {
 	initEventHandlers()
+	CreateMenu(MENU)
 
 	// DEV: Render before load go?
 	render()

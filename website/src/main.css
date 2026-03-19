@@ -361,6 +361,11 @@ input[type='number'] {
 	padding: 0.5rem;
 	border-radius: 0.25rem;
 	background: var(--color-slate-200);
+	text-transform: lowercase;
+}
+
+.menu .menu-block .menu-block--element:first-letter {
+	text-transform: uppercase;
 }
 
 .menu .menu-block .menu-block--element:hover {
@@ -375,7 +380,7 @@ input[type='number'] {
 	background: var(--color-violet-400);
 }
 
-.menu .menu-block.menu-block_main .menu-block--element:has(input:checked) {
+.menu .menu-block:nth-child(even) .menu-block--element:has(input:checked) {
 	background: var(--color-pink-400);
 }
 

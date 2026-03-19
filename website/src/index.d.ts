@@ -15,22 +15,7 @@ interface Config {
 		submitButton: ElementInfo<HTMLButtonElement>
 	}
 
-	menu: {
-		name: {
-			methods: string
-			operation: string
-		}
-		value: {
-			methods: string[]
-			operation: string[]
-		}
-	}
-
 	UIids: {
-		menu: {
-			base: ElementInfo<HTMLDivElement>
-			methods: ElementInfo<HTMLDivElement>
-		}
 		encodeBlock: ElementInfo<HTMLDivElement>
 		decodeBlock: ElementInfo<HTMLDivElement>
 		swapButton: ElementInfo<HTMLButtonElement>

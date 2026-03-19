@@ -1,10 +1,10 @@
-import { assert } from './shared/errors.js'
+import { assert } from '../shared/errors.js'
 import {
 	checkGoOutput,
 	loadElement,
 	loadInputElement,
 	typedEventListener,
-} from './shared/shared.js'
+} from '../shared/shared.js'
 
 /**
  * Inner LSB key structure
